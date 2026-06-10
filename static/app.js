@@ -1,10 +1,174 @@
+// === C++ Syntax Highlighter ===
+var CPP_KEYWORDS = [
+  'auto','break','case','char','const','continue','default','do','double',
+  'else','enum','extern','float','for','goto','if','int','long','return',
+  'short','signed','sizeof','static','struct','switch','typedef','union',
+  'unsigned','void','volatile','while','class','namespace','using','public',
+  'private','protected','virtual','new','delete','template','typename',
+  'true','false','nullptr','include','define','ifdef','ifndef','endif',
+  'elseif','pragma','std','cout','cin','endl','string','vector','map',
+  'set','algorithm','iostream','cstdint','main','size_t','constexpr','override'
+];
+
+function highlightCpp(code) {
+  var html = code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  // Prevent matching inside tags
+  var inTag = false;
+  var result = '';
+  for (var i = 0; i < html.length; ) {
+    if (html.substr(i,4) === '&lt;') { inTag = true; result += '&lt;'; i+=4; continue; }
+    if (html.substr(i,4) === '&gt;') { inTag = false; result += '&gt;'; i+=4; continue; }
+    result += html[i]; i++;
+  }
+  html = result;
+
+  // Preprocessor directives (#include, #define, etc.)
+  html = html.replace(/^(#\s*\w+.*)$/gm, '<span class="hl-preproc">$1</span>');
+
+  // Multi-line and single-line comments
+  html = html.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="hl-comment">$1</span>');
+  html = html.replace(/(\/\/.*$)/gm, '<span class="hl-comment">$1</span>');
+
+  // Strings (double and single quotes)
+  html = html.replace(/(&quot;.*?&quot;)/g, '<span class="hl-string">$1</span>');
+  html = html.replace(/(&#39;.*?&#39;)/g, '<span class="hl-string">$1</span>');
+  html = html.replace(/("(?:[^"\\]|\\.)*")/g, '<span class="hl-string">$1</span>');
+
+  // Numbers (with optional suffixes)
+  html = html.replace(/\b(\d+\.?\d*(?:[eE][+-]?\d+)?[fFlLuU]*)\b/g, '<span class="hl-number">$1</span>');
+
+  // Angle bracket headers <...>
+  html = html.replace(/(&lt;[^&]*&gt;)/g, '<span class="hl-angle">$1</span>');
+
+  // Keywords
+  var kwPattern = '\\b(' + CPP_KEYWORDS.join('|') + ')\\b';
+  html = html.replace(new RegExp(kwPattern, 'g'), '<span class="hl-keyword">$1</span>');
+
+  return html;
+}
+
+// === Code Editor Setup ===
+function initCodeEditor() {
+  var ta = document.getElementById('code-area');
+  if (!ta) return;
+
+  // Create wrapper
+  var wrapper = document.createElement('div');
+  wrapper.className = 'code-editor-wrapper';
+  ta.parentNode.insertBefore(wrapper, ta);
+
+  // Create highlight overlay
+  var pre = document.createElement('pre');
+  pre.className = 'code-editor-highlight';
+  pre.setAttribute('aria-hidden', 'true');
+  var code = document.createElement('code');
+  pre.appendChild(code);
+
+  wrapper.appendChild(ta);
+  wrapper.appendChild(pre);
+
+  // Line numbers gutter
+  var gutter = document.createElement('div');
+  gutter.className = 'code-editor-gutter';
+  wrapper.insertBefore(gutter, ta);
+
+  function update() {
+    var text = ta.value;
+    var lines = text.split('\n');
+    var html = highlightCpp(text + '\n');
+    code.innerHTML = html + '\n';
+
+    // Update gutter
+    var gutterHtml = '';
+    for (var i = 0; i < lines.length; i++) {
+      gutterHtml += '<span>' + (i + 1) + '</span>';
+    }
+    gutter.innerHTML = gutterHtml;
+  }
+
+  function syncScroll() {
+    pre.scrollTop = ta.scrollTop;
+    pre.scrollLeft = ta.scrollLeft;
+    gutter.scrollTop = ta.scrollTop;
+  }
+
+  // Tab key support
+  ta.addEventListener('keydown', function(e) {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      var start = ta.selectionStart;
+      var end = ta.selectionEnd;
+      // If multiple lines selected, indent them
+      if (start !== end) {
+        var before = ta.value.substring(0, ta.selectionStart);
+        var sel = ta.value.substring(ta.selectionStart, ta.selectionEnd);
+        var after = ta.value.substring(ta.selectionEnd);
+        var lines = sel.split('\n');
+        var indented = lines.map(function(l) { return '  ' + l; }).join('\n');
+        ta.value = before + indented + after;
+        ta.selectionStart = start;
+        ta.selectionEnd = start + indented.length;
+      } else {
+        document.execCommand('insertText', false, '  ');
+      }
+      update();
+      syncScroll();
+    }
+    if (e.key === 'Enter') {
+      setTimeout(function() {
+        // Auto-indent to match previous line
+        var pos = ta.selectionStart;
+        var before = ta.value.substring(0, pos);
+        var prevLine = before.split('\n').slice(-2, -1)[0] || '';
+        var indent = prevLine.match(/^(\s*)/)[1];
+        if (prevLine.trimRight().endsWith('{')) indent += '  ';
+        ta.setRangeText(indent, pos, pos, 'end');
+        update();
+        syncScroll();
+      }, 0);
+    }
+  });
+
+  ta.addEventListener('input', function() { update(); syncScroll(); });
+  ta.addEventListener('scroll', syncScroll);
+  ta.addEventListener('mousewheel', function() { setTimeout(syncScroll, 0); });
+
+  // Initial render
+  update();
+}
+
+// Update submitCode to use the new editor
+function submitCode(problemId) {
+  var code = document.getElementById('code-area').value;
+  var resultEl = document.getElementById('submit-result');
+  resultEl.innerHTML = '<p>Judging...</p>';
+  postJSON('/problem/' + problemId + '/submit', {code: code})
+    .then(function(r) {
+      var color = r.status === 'AC' ? 'green' : (r.status === 'CE' ? '#c0a000' : 'red');
+      var html = '<h3>Result</h3><p style="color:' + color + ';font-size:1.2em;font-weight:bold">' + r.status + '</p>';
+      if (r.status === 'CE') {
+        html += '<pre>' + (r.compile_error || '') + '</pre>';
+      } else if (r.status === 'WA') {
+        html += '<p>Failed on test case #' + r.failed_case + '</p>';
+        html += '<p><strong>Expected:</strong></p><pre>' + r.expected_output + '</pre>';
+        html += '<p><strong>Actual:</strong></p><pre>' + r.actual_output + '</pre>';
+      }
+      if (r.time_ms > 0) html += '<p>Time: ' + r.time_ms + 'ms</p>';
+      resultEl.innerHTML = html;
+    })
+    .catch(function(e) {
+      resultEl.innerHTML = '<p style="color:red">Error: ' + e.message + '</p>';
+    });
+}
+
 function postJSON(url, data) {
   return fetch(url, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(data)
-  }).then(r => {
-    if (!r.ok) return r.json().then(j => { throw new Error(j.error || r.statusText); });
+  }).then(function(r) {
+    if (!r.ok) return r.json().then(function(j) { throw new Error(j.error || r.statusText); });
     return r.json();
   });
 }
@@ -34,29 +198,6 @@ function doRegister() {
       else showError('register-error', r.error);
     })
     .catch(function(e) { showError('register-error', e.message); });
-}
-
-function submitCode(problemId) {
-  var code = document.getElementById('code-area').value;
-  var resultEl = document.getElementById('submit-result');
-  resultEl.innerHTML = '<p>Judging...</p>';
-  postJSON('/problem/' + problemId + '/submit', {code: code})
-    .then(function(r) {
-      var color = r.status === 'AC' ? 'green' : (r.status === 'CE' ? '#c0a000' : 'red');
-      var html = '<h3>Result</h3><p style="color:' + color + ';font-size:1.2em;font-weight:bold">' + r.status + '</p>';
-      if (r.status === 'CE') {
-        html += '<pre>' + (r.compile_error || '') + '</pre>';
-      } else if (r.status === 'WA') {
-        html += '<p>Failed on test case #' + r.failed_case + '</p>';
-        html += '<p><strong>Expected:</strong></p><pre>' + r.expected_output + '</pre>';
-        html += '<p><strong>Actual:</strong></p><pre>' + r.actual_output + '</pre>';
-      }
-      if (r.time_ms > 0) html += '<p>Time: ' + r.time_ms + 'ms</p>';
-      resultEl.innerHTML = html;
-    })
-    .catch(function(e) {
-      resultEl.innerHTML = '<p style="color:red">Error: ' + e.message + '</p>';
-    });
 }
 
 function createProblem() {
@@ -122,3 +263,8 @@ function deleteTestCase(caseId, problemId) {
     })
     .catch(function(e) { alert('Error: ' + e.message); });
 }
+
+// Boot
+document.addEventListener('DOMContentLoaded', function() {
+  initCodeEditor();
+});

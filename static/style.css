@@ -1,3 +1,4 @@
+/* v4 — ensure browser loads fresh */
 /* === Reset & Base === */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -363,25 +364,95 @@ button:hover, .btn:hover, a.btn:hover {
 }
 
 /* === Code Editor === */
-#code-area, .code-editor {
-  width: 100%;
-  padding: 14px;
+.code-editor-wrapper {
+  position: relative;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
+  overflow: hidden;
+  background: #1e1e2e;
+  display: flex;
+}
+
+.code-editor-gutter {
+  background: #16162a;
+  color: #54546d;
+  padding: 14px 0;
+  text-align: right;
   font-family: var(--font-mono);
   font-size: 0.88rem;
   line-height: 1.55;
-  resize: vertical;
-  background: #1e1e2e;
-  color: #cdd6f4;
+  user-select: none;
+  overflow: hidden;
+  min-width: 40px;
+  counter-reset: line;
+}
+
+.code-editor-gutter span {
+  display: block;
+  padding: 0 14px 0 8px;
+}
+
+#code-area, .code-editor {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  border-radius: 0;
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  resize: none;
+  background: transparent;
+  color: transparent;
+  caret-color: #cdd6f4;
   outline: none;
-  tab-size: 4;
+  tab-size: 2;
+  white-space: pre;
+  overflow: auto;
+  position: relative;
+  z-index: 2;
+  min-height: 400px;
 }
 
 #code-area:focus, .code-editor:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  border-color: transparent;
+  box-shadow: none;
 }
+
+.code-editor-highlight {
+  position: absolute;
+  top: 0;
+  left: 40px;
+  right: 0;
+  bottom: 0;
+  padding: 14px;
+  margin: 0;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  white-space: pre;
+  overflow: auto;
+  pointer-events: none;
+  z-index: 1;
+  color: #cdd6f4;
+}
+
+.code-editor-highlight code {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* C++ Syntax Highlighting Colors */
+.hl-keyword  { color: #c792ea; font-weight: 600; }
+.hl-preproc  { color: #c792ea; }
+.hl-comment  { color: #676e95; font-style: italic; }
+.hl-string   { color: #c3e88d; }
+.hl-number   { color: #f78c6c; }
+.hl-angle    { color: #ffcb6b; }
+
 
 /* === Submit Result === */
 #submit-result { margin-top: 20px; }
