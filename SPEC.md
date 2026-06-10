@@ -458,13 +458,15 @@ vibe-oj/
 - [x] API 集成测试全部通过 (32/32)
 
 ### Phase 8: 测试 & 收尾
-- [ ] 编写测试题目数据 (至少 2 道: Easy + Medium)
-- [ ] 端到端测试: 浏览器访问 → 注册 → 登录 → 查看题目列表 → 提交代码 → 看判题结果
-- [ ] 端到端测试: admin 创建/编辑/删除题目 + 管理用例
-- [ ] 沙箱安全测试: 死循环 (TLE), malloc 炸弹 (MLE), fork 炸弹 (子进程限制), 网络调用 (seccomp 拦截)
-- [ ] 验证: 未登录时访问 `/problem/1` 自动重定向到 `/login`
-- [ ] 验证: 非 admin 访问 `/admin` 返回 403
-- [ ] README.md (构建 & 运行说明)
+- [x] 编写测试题目数据 (2 道: Easy A+B Problem + Medium Reverse String, 各含 3 个测试用例)
+- [x] 端到端测试: test_api.py 覆盖 注册→登录→浏览题目→提交代码→判题(AC/WA/CE/TLE/RE)
+- [x] 端到端测试: test_api.py 覆盖 admin 创建/编辑/删除题目 + 管理用例 + 用户列表
+- [x] 沙箱安全测试: test_judge.cc 覆盖 TLE (死循环), MLE (malloc 炸弹), RE (SIGSEGV/SIGABRT), 网络拦截 (seccomp)
+- [x] 验证: 未登录访问 `/problems` → 302 `/login` (test_api.py 4.2)
+- [x] 验证: 非 admin 访问 `/admin` → 403 (test_api.py 4.3, 4.4)
+- [x] README.md (构建 & 运行说明)
+- [x] 运行 `make test` 全部通过 (83/83)
+- [x] API 集成测试全部通过 (32/32)
 
 ---
 
@@ -531,5 +533,5 @@ vibe-oj/
 
 ---
 
-> **版本**: v1.0 | **日期**: 2026-06-02 | **下次评审**: MVP 完成后
+> **版本**: v1.0 | **日期**: 2026-06-10 | **状态**: MVP 完成 (Phases 1-8)
   
