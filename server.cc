@@ -14,13 +14,13 @@ using json = nlohmann::json;
 static Database db;
 
 static std::string nav_public() {
-    return "<a href=\"/\">Home</a> | <a href=\"/login\">Login</a> | <a href=\"/register\">Register</a>";
+    return "<a href=\"/\">首页</a> | <a href=\"/login\">登录</a> | <a href=\"/register\">注册</a>";
 }
 static std::string nav_user(const std::string& username, bool is_admin) {
-    std::string s = "<a href=\"/problems\">Problems</a> | ";
-    if (is_admin) s += "<span class=\"admin-badge\">admin</span> ";
-    s += username + " | <a href=\"/logout\">Logout</a>";
-    if (is_admin) s += " | <a href=\"/admin\">Admin</a>";
+    std::string s = "<a href=\"/problems\">题目列表</a> | ";
+    if (is_admin) s += "<span class=\"admin-badge\">管理</span> ";
+    s += username + " | <a href=\"/logout\">登出</a>";
+    if (is_admin) s += " | <a href=\"/admin\">后台</a>";
     return s;
 }
 
@@ -30,7 +30,7 @@ static std::string load_tmpl(const std::string& name) {
 }
 
 static std::string build_table_rows(const std::vector<Problem>& problems) {
-    if (problems.empty()) return "<tr><td colspan=\"3\">No problems yet</td></tr>";
+    if (problems.empty()) return "<tr><td colspan=\"3\">暂无题目</td></tr>";
     std::ostringstream ss;
     for (const auto& p : problems) {
         ss << "<tr>"
@@ -43,7 +43,7 @@ static std::string build_table_rows(const std::vector<Problem>& problems) {
 }
 
 static std::string build_admin_rows(const std::vector<Problem>& problems) {
-    if (problems.empty()) return "<tr><td colspan=\"4\">No problems yet</td></tr>";
+    if (problems.empty()) return "<tr><td colspan=\"4\">暂无题目</td></tr>";
     std::ostringstream ss;
     for (const auto& p : problems) {
         ss << "<tr>"
@@ -51,16 +51,16 @@ static std::string build_admin_rows(const std::vector<Problem>& problems) {
            << "<td>" << p.title << "</td>"
            << "<td><span class=\"" << p.difficulty << "\">" << p.difficulty << "</span></td>"
            << "<td>"
-           << "<a href=\"/admin/problems/" << p.id << "/edit\">Edit</a> | "
-           << "<a href=\"/admin/problems/" << p.id << "/testcases\">Test Cases</a> | "
-           << "<button onclick=\"deleteProblem(" << p.id << ")\">Delete</button>"
+           << "<a href=\"/admin/problems/" << p.id << "/edit\">编辑</a> | "
+           << "<a href=\"/admin/problems/" << p.id << "/testcases\">用例</a> | "
+           << "<button onclick=\"deleteProblem(" << p.id << ")\">删除</button>"
            << "</td></tr>";
     }
     return ss.str();
 }
 
 static std::string build_user_rows(const std::vector<User>& users) {
-    if (users.empty()) return "<tr><td colspan=\"4\">No users</td></tr>";
+    if (users.empty()) return "<tr><td colspan=\"4\">暂无用户</td></tr>";
     std::ostringstream ss;
     for (const auto& u : users) {
         ss << "<tr>"
@@ -74,7 +74,7 @@ static std::string build_user_rows(const std::vector<User>& users) {
 }
 
 static std::string build_tc_rows(const std::vector<TestCase>& cases, int problem_id) {
-    if (cases.empty()) return "<tr><td colspan=\"5\">No test cases yet</td></tr>";
+    if (cases.empty()) return "<tr><td colspan=\"5\">暂无测试用例</td></tr>";
     std::ostringstream ss;
     for (const auto& tc : cases) {
         ss << "<tr>"
@@ -91,10 +91,10 @@ static std::string build_tc_rows(const std::vector<TestCase>& cases, int problem
 static std::string build_sample_cases(const std::vector<TestCase>& cases) {
     if (cases.empty()) return "";
     std::ostringstream ss;
-    ss << "<h3>Sample Test Cases</h3>";
+    ss << "<h3>示例测试用例</h3>";
     for (size_t i = 0; i < cases.size(); i++) {
-        ss << "<p><strong>Input:</strong></p><pre>" << cases[i].input << "</pre>"
-           << "<p><strong>Expected:</strong></p><pre>" << cases[i].expected << "</pre>";
+    ss << "<p><strong>输入:</strong></p><pre>" << cases[i].input << "</pre>"
+       << "<p><strong>期望:</strong></p><pre>" << cases[i].expected << "</pre>";
         if (i < cases.size() - 1) ss << "<hr>";
     }
     return ss.str();
@@ -298,17 +298,17 @@ int main() {
         CHECK_ADMIN(res);
         std::string tmpl = load_tmpl("admin_problem_form.html");
         std::map<std::string, std::string> vars = {
-            {"TITLE", "New"},
+            {"TITLE", "新建题目"},
             {"TITLE_VALUE", ""},
             {"DIFFICULTY_OPTIONS", build_difficulty_options("Easy")},
             {"CONTENT", ""},
             {"TEMPLATE", ""},
             {"SUBMIT_FN", "createProblem"},
-            {"SUBMIT_LABEL", "Create"},
+            {"SUBMIT_LABEL", "创建"},
             {"ID", "0"},
         };
         std::string body = replace_all(tmpl, vars);
-        res.set_content(render_page("New Problem", body, nav_user(session->username, true)), "text/html");
+        res.set_content(render_page("新建题目", body, nav_user(session->username, true)), "text/html");
     });
 
     svr.Post("/admin/problems", [](const httplib::Request& req, httplib::Response& res) {
@@ -345,17 +345,17 @@ int main() {
         if (p.id == 0) { res.status = 404; res.set_content("<h1>404 Not Found</h1>", "text/html"); return; }
         std::string tmpl = load_tmpl("admin_problem_form.html");
         std::map<std::string, std::string> vars = {
-            {"TITLE", "Edit Problem #" + std::to_string(id)},
+            {"TITLE", "编辑题目 #" + std::to_string(id)},
             {"TITLE_VALUE", p.title},
             {"DIFFICULTY_OPTIONS", build_difficulty_options(p.difficulty)},
             {"CONTENT", p.content},
             {"TEMPLATE", p.template_code},
             {"SUBMIT_FN", "updateProblem"},
-            {"SUBMIT_LABEL", "Save"},
+            {"SUBMIT_LABEL", "保存"},
             {"ID", std::to_string(id)},
         };
         std::string body = replace_all(tmpl, vars);
-        res.set_content(render_page("Edit Problem", body, nav_user(session->username, true)), "text/html");
+        res.set_content(render_page("编辑题目", body, nav_user(session->username, true)), "text/html");
     });
 
     svr.Post(R"(/admin/problems/(\d+)/edit)", [](const httplib::Request& req, httplib::Response& res) {

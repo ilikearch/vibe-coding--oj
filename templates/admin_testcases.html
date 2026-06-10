@@ -1,26 +1,26 @@
-<h1>Test Cases for {{PROBLEM_TITLE}}</h1>
-<p><a href="/admin">Back to Admin</a></p>
+<h1>测试用例 - {{PROBLEM_TITLE}}</h1>
+<p><a href="/admin">返回后台</a></p>
 
-<h2>Add Test Case</h2>
+<h2>添加用例</h2>
 <div id="tc-result" class="error-message"></div>
 <div class="form-group">
-  <label for="tc-input">Input (stdin)</label>
+  <label for="tc-input">输入 (stdin)</label>
   <textarea id="tc-input" class="form-textarea" rows="4"></textarea>
 </div>
 <div class="form-group">
-  <label for="tc-expected">Expected Output (stdout)</label>
+  <label for="tc-expected">期望输出 (stdout)</label>
   <textarea id="tc-expected" class="form-textarea" rows="4"></textarea>
 </div>
 <div class="form-group">
-  <label for="tc-position">Position</label>
+  <label for="tc-position">序号</label>
   <input id="tc-position" type="number" class="form-input" value="0" style="width:100px">
 </div>
-<button onclick="addTestCase({{PROBLEM_ID}})" class="btn btn-primary">Add Test Case</button>
+<button onclick="addTestCase({{PROBLEM_ID}})" class="btn btn-primary">添加</button>
 
-<h2>Test Cases</h2>
+<h2>用例列表</h2>
 <table class="table">
   <thead>
-    <tr><th>ID</th><th>Pos</th><th>Input</th><th>Expected</th><th>Action</th></tr>
+    <tr><th>ID</th><th>序号</th><th>输入</th><th>期望</th><th>操作</th></tr>
   </thead>
   <tbody>
     {{TESTCASE_ROWS}}

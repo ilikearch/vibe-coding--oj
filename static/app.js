@@ -142,19 +142,19 @@ function initCodeEditor() {
 function submitCode(problemId) {
   var code = document.getElementById('code-area').value;
   var resultEl = document.getElementById('submit-result');
-  resultEl.innerHTML = '<p>Judging...</p>';
+  resultEl.innerHTML = '<p>判题中...</p>';
   postJSON('/problem/' + problemId + '/submit', {code: code})
     .then(function(r) {
       var color = r.status === 'AC' ? 'green' : (r.status === 'CE' ? '#c0a000' : 'red');
-      var html = '<h3>Result</h3><p style="color:' + color + ';font-size:1.2em;font-weight:bold">' + r.status + '</p>';
+      var html = '<h3>判题结果</h3><p style="color:' + color + ';font-size:1.2em;font-weight:bold">' + r.status + '</p>';
       if (r.status === 'CE') {
         html += '<pre>' + (r.compile_error || '') + '</pre>';
       } else if (r.status === 'WA') {
-        html += '<p>Failed on test case #' + r.failed_case + '</p>';
-        html += '<p><strong>Expected:</strong></p><pre>' + r.expected_output + '</pre>';
-        html += '<p><strong>Actual:</strong></p><pre>' + r.actual_output + '</pre>';
+        html += '<p>第 ' + r.failed_case + ' 个测试点失败</p>';
+        html += '<p><strong>期望输出:</strong></p><pre>' + r.expected_output + '</pre>';
+        html += '<p><strong>实际输出:</strong></p><pre>' + r.actual_output + '</pre>';
       }
-      if (r.time_ms > 0) html += '<p>Time: ' + r.time_ms + 'ms</p>';
+      if (r.time_ms > 0) html += '<p>耗时: ' + r.time_ms + 'ms</p>';
       resultEl.innerHTML = html;
     })
     .catch(function(e) {
