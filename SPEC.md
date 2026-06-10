@@ -357,6 +357,9 @@ vibe-oj/
 │   ├── test_auth.cc            # Phase 2 加入
 │   ├── test_judge.cc           # Phase 5 加入
 │   └── test_api.py             # API 集成测试 (32 项, Python)
+├── README.md                   # 项目介绍
+├── DEPLOY.md                   # 部署指南
+├── API.md                      # 接口文档
 └── SPEC.md
 ```
 
@@ -464,7 +467,7 @@ vibe-oj/
 - [x] 沙箱安全测试: test_judge.cc 覆盖 TLE (死循环), MLE (malloc 炸弹), RE (SIGSEGV/SIGABRT), 网络拦截 (seccomp)
 - [x] 验证: 未登录访问 `/problems` → 302 `/login` (test_api.py 4.2)
 - [x] 验证: 非 admin 访问 `/admin` → 403 (test_api.py 4.3, 4.4)
-- [x] README.md (构建 & 运行说明)
+- [x] README.md (项目介绍)、DEPLOY.md (部署指南)
 - [x] 运行 `make test` 全部通过 (83/83)
 - [x] API 集成测试全部通过 (32/32)
 
