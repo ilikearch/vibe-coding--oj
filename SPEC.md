@@ -450,9 +450,12 @@ vibe-oj/
 - [x] API 集成测试全部通过 (32/32)
 
 ### Phase 7: 主服务器整合
-- [ ] `server.cc`: 注册所有路由 handler, 挂载 `static/` 目录, 启动 8080 端口
-- [ ] 并发: cpp-httplib 默认多线程 (无需手动管理)
-- [ ] 运行 `make test` 全部通过
+- [x] `server.cc`: 重构所有 GET 路由使用 `read_template()` + `replace_all()` 加载模板
+- [x] 保留辅助函数: `build_table_rows`, `build_admin_rows`, `build_user_rows`, `build_tc_rows`, `build_sample_cases`, `build_difficulty_options`
+- [x] 静态文件挂载 `static/` → `/`，启动 8080 端口
+- [x] 并发: cpp-httplib 默认多线程 (无需手动管理)
+- [x] 运行 `make test` 全部通过 (83/83)
+- [x] API 集成测试全部通过 (32/32)
 
 ### Phase 8: 测试 & 收尾
 - [ ] 编写测试题目数据 (至少 2 道: Easy + Medium)
