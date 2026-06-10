@@ -11,6 +11,8 @@
 | 使用场景 | 个人/小团队自用刷题 |
 | 判题模式 | stdin/stdout 比对 |
 | 编程语言 | C++ (g++), MVP 仅此一种 |
+| 前后端交互 | JSON (POST), HTML (GET) |
+| 前端技术 | 原生 HTML + CSS + JS fetch, 无框架依赖 |
 | 用户系统 | 注册/登录, admin + user 双角色 |
 | 数据库 | MySQL (仅持久化题目 + 用户, 提交记录不持久化) |
 | 部署 | 本地 Linux, `./server` 直接运行 |
@@ -22,11 +24,12 @@
 ```
 ┌────────────────────────────────────────────────┐
 │                   Browser                      │
-│  (原生 HTML + CSS, 传统多页面, <form> 提交)      │
+│  (原生 HTML + CSS + JS fetch, <form> + AJAX)    │
 └────────────┬───────────────────────────────────┘
-             │ HTTP (完整 HTML 页面)
-             │ GET /problem/1  → 服务端返回完整 HTML
-             │ POST /problem/1/submit → 服务端返回结果页 HTML
+             │ HTTP (JSON 请求/响应)
+             │ GET /problem/1  → 服务端返回完整 HTML 页面
+             │ POST /problem/1/submit → JSON body, 服务端返回 JSON
+             │ POST /login → JSON body, 服务端返回 JSON
              ▼
 ┌────────────────────────────────────────────────┐
 │              cpp-httplib Server                 │
@@ -54,19 +57,22 @@
 └────────────────────────────────────────────────┘
 ```
 
-**交互模式**: 传统多页面 (MPA)
-- 浏览器发送 GET/POST 请求，服务端返回完整 HTML 页面
-- 无 AJAX/fetch，无客户端路由
-- 数据随 HTML 页面由服务端 C++ 代码拼装 (字符串模板替换 `{{var}}`)
-- 用户操作通过 `<form>` 提交，服务端处理后重定向或返回新页面
+**交互模式**: 混合模式 (MPA + AJAX)
+- GET 请求 → 服务端返回完整 HTML 页面（服务端渲染）
+- POST 请求 → `Content-Type: application/json`, `Accept: application/json`
+- 前端通过 `fetch()` 发送 JSON 请求体，接收 JSON 响应
+- 登录/注册/提交代码等操作通过 JSON API 实现
+- 页面导航和表单展示仍通过 GET 请求获取完整 HTML
+- 服务端通过 `nlohmann/json` 解析请求 JSON 和构造响应 JSON
 
 **数据流 (判题路径)**:
-1. 用户在 `/problem/:id` 页面的 `<form>` 中填写代码，`POST /problem/:id/submit`
-2. 后端在沙箱外调用 `g++` 编译
-3. 编译成功 → fork 子进程 → 限制 CPU/内存/IO/网络
-4. 子进程读取 stdin (测试用例 input), 写入 stdout
-5. 父进程比对 stdout 与 expected, 判定 AC/WA/TLE/MLE/RE
-6. 服务端将判题结果拼入 HTML，返回完整结果页
+1. 用户在前端页面填写代码，通过 `fetch()` 发送 `POST /problem/:id/submit`，请求体为 JSON `{"code": "..."}`
+2. 后端解析 JSON 请求体，获取 `code` 字段
+3. 沙箱外调用 `g++` 编译
+4. 编译成功 → fork 子进程 → 限制 CPU/内存/IO/网络
+5. 子进程读取 stdin (测试用例 input), 写入 stdout
+6. 父进程比对 stdout 与 expected, 判定 AC/WA/TLE/MLE/RE
+7. 服务端返回 JSON 响应 `{"status":"AC","time_ms":42,...}`
 
 ---
 
@@ -107,67 +113,83 @@ CREATE TABLE users (
 
 ---
 
-## 4. 路由设计 (服务端渲染 HTML)
+## 4. 路由设计 (服务端渲染 HTML + JSON API)
 
 **Base URL**: `http://localhost:8080`
-**响应格式**: `text/html` (服务端拼装完整 HTML 页面)
+**GET 响应格式**: `text/html` (服务端拼装完整 HTML 页面)
+**POST 请求/响应格式**: `application/json`
 **认证**: Session Cookie (`session_id=xxx`)，由服务端中间件校验
-**admin 路由**: 中间件校验 `role=admin`，非 admin 返回 403 页面
+**admin 路由**: 中间件校验 `role=admin`，非 admin 返回 `{"error":"Forbidden"}` (HTTP 403)
 
 ### 4.1 公开页面 (无需登录)
 
-| Method | Path | 说明 |
-|--------|------|------|
-| GET | `/` | **首页落地页**。展示 OJ 简介、功能特性、统计数据，提供 登录/注册/浏览题目 入口 |
-| GET | `/login` | 返回登录页 HTML (含 `<form method="POST" action="/login">`) |
-| POST | `/login` | 处理登录表单 (`username`, `password`), 成功→重定向 `/problems`, 失败→返回 login 页+错误提示 |
-| GET | `/register` | 返回注册页 HTML |
-| POST | `/register` | 处理注册, 成功后重定向 `/login` |
-| GET | `/logout` | 清除 session, 重定向 `/` |
+| Method | Path | 说明 | Request Body | Response Body |
+|--------|------|------|-------------|---------------|
+| GET | `/` | **首页落地页**。展示 OJ 简介、功能特性、统计数据，提供 登录/注册/浏览题目 入口 | — | `text/html` |
+| GET | `/login` | 返回登录页 HTML (含登录表单) | — | `text/html` |
+| POST | `/login` | 处理登录 | `{"username":"...","password":"..."}` | `{"success":true,"redirect":"/problems"}` 或 `{"success":false,"error":"Invalid credentials"}` |
+| GET | `/register` | 返回注册页 HTML | — | `text/html` |
+| POST | `/register` | 处理注册 | `{"username":"...","password":"..."}` | `{"success":true,"redirect":"/login"}` 或 `{"success":false,"error":"Username taken"}` |
+| GET | `/logout` | 清除 session, 重定向 `/` | — | 302 redirect |
 
 ### 4.2 用户页面 (需登录)
 
-| Method | Path | 说明 |
-|--------|------|------|
-| GET | `/problems` | 题目列表页。服务端查 DB → 拼装 HTML (含题号/标题/难度表格) |
-| GET | `/problem/:id` | 题目详情页。左侧题目描述(Markdown→HTML) + 示例用例, 右侧 `<textarea>` 编辑区 + `<form method="POST" action="/problem/:id/submit">` |
-| POST | `/problem/:id/submit` | 处理代码提交 (`code` 字段)。编译+判题, 将结果 (AC/WA/TLE/...) 拼入结果页 HTML 返回 (同一页面, 下方显示结果) |
+| Method | Path | 说明 | Request Body | Response Body |
+|--------|------|------|-------------|---------------|
+| GET | `/problems` | 题目列表页。服务端查 DB → 拼装 HTML | — | `text/html` |
+| GET | `/problem/:id` | 题目详情页。左侧题目描述(Markdown→HTML) + 示例用例, 右侧代码编辑区 + 提交按钮 | — | `text/html` |
+| POST | `/problem/:id/submit` | 处理代码提交。编译+判题, 返回 JSON 结果 | `{"code":"#include <iostream>..."}` | `{"status":"AC","time_ms":42,"memory_kb":1024}` 或 `{"status":"WA","failed_case":3,"expected":"...","actual":"..."}` 或 `{"status":"CE","compile_error":"..."}` |
 
 ### 4.3 管理后台 (需 role=admin)
 
-| Method | Path | 说明 |
-|--------|------|------|
-| GET | `/admin` | 管理面板主页 (题目列表 + 操作入口) |
-| GET | `/admin/problems/new` | 新建题目表单页 |
-| POST | `/admin/problems` | 创建题目 (`title`, `difficulty`, `content`, `template`), 重定向回 `/admin` |
-| GET | `/admin/problems/:id/edit` | 编辑题目表单页 (预填现有数据) |
-| POST | `/admin/problems/:id/edit` | 更新题目, 重定向回 `/admin` |
-| POST | `/admin/problems/:id/delete` | 删除题目 (级联删用例), 重定向 `/admin` |
-| GET | `/admin/problems/:id/testcases` | 该题目的测试用例管理页 (列表+添加表单) |
-| POST | `/admin/problems/:id/testcases` | 添加测试用例 (`input`, `expected`, `position`) |
-| POST | `/admin/testcases/:id/delete` | 删除单个用例, 重定向回原题目用例页 |
-| GET | `/admin/users` | 用户列表 (只读) |
+| Method | Path | 说明 | Request Body | Response Body |
+|--------|------|------|-------------|---------------|
+| GET | `/admin` | 管理面板主页 | — | `text/html` |
+| GET | `/admin/problems/new` | 新建题目表单页 | — | `text/html` |
+| POST | `/admin/problems` | 创建题目 | `{"title":"...","difficulty":"Easy","content":"...","template":"..."}` | `{"success":true,"id":1}` |
+| GET | `/admin/problems/:id/edit` | 编辑题目表单页 | — | `text/html` |
+| POST | `/admin/problems/:id/edit` | 更新题目 | `{"title":"...","difficulty":"Medium","content":"...","template":"..."}` | `{"success":true}` |
+| POST | `/admin/problems/:id/delete` | 删除题目 (级联删用例) | `{}` | `{"success":true}` |
+| GET | `/admin/problems/:id/testcases` | 用例管理页 | — | `text/html` |
+| POST | `/admin/problems/:id/testcases` | 添加测试用例 | `{"input":"...","expected":"...","position":0}` | `{"success":true,"id":1}` |
+| POST | `/admin/testcases/:id/delete` | 删除单个用例 | `{"problem_id":1}` | `{"success":true}` |
+| GET | `/admin/users` | 用户列表 (只读) | — | `text/html` |
 
-### 4.4 服务端 HTML 拼装约定
+### 4.4 JSON API 规范
 
+**POST 请求格式**: `Content-Type: application/json`
+```json
+{"field1": "value1", "field2": "value2"}
 ```
-服务端 C++ 代码中, 用函数拼装 HTML:
 
-string render_page(const string& title, const string& body) {
-    return R"(<!DOCTYPE html>
-<html><head><title>)" + title + R"(</title>
-<link rel="stylesheet" href="/style.css"></head>
-<body>
-<nav>...导航栏...</nav>
-)" + body + R"(
-</body></html>)";
+**POST 响应格式**: `Content-Type: application/json`
+```json
+{"success": true, "data": {...}}
+// 或错误
+{"success": false, "error": "描述信息"}
+```
+
+**通用响应字段**:
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `success` | bool | 操作是否成功 |
+| `error` | string | 错误描述 (success=false 时) |
+| `redirect` | string | 成功后前端跳转路径 |
+| `id` | int | 创建资源时返回的 ID |
+
+**判题结果 JSON 结构**:
+```json
+{
+  "status": "AC",
+  "time_ms": 42,
+  "memory_kb": 1024,
+  "failed_case": 0,
+  "expected_output": "",
+  "actual_output": ""
 }
 ```
 
-- 判题结果在 `problem.html` 模板中通过 `{{result}}` 占位符替换为 HTML 片段
-- 题目列表通过循环拼接 `<tr>` 行
-- 导航栏区分登录/未登录/管理员状态
-- 所有样式集中在 `static/style.css`
+**GET 渲染**: 服务端 C++ 代码拼装完整 HTML 页面，字符串模板替换 `{{KEY}}` 占位符，通过 `render_page()` 包裹公共布局。
 
 ---
 
@@ -247,8 +269,8 @@ submit(code) ──→ g++ code.cpp -o prog
 | 路径 | 页面 | 认证 | 说明 |
 |------|------|------|------|
 | `/` | 首页落地页 | 无 | OJ 简介 + 功能亮点 + 统计数据 + 登录/注册/浏览题目入口 |
-| `/login` | 登录 | 无 | `<form>` 提交 username+password |
-| `/register` | 注册 | 无 | `<form>` 提交, 默认 role=user |
+| `/login` | 登录 | 无 | `<input>` + `<button>` JS `fetch()` 提交 JSON |
+| `/register` | 注册 | 无 | `<input>` + `<button>` JS `fetch()` 提交 JSON |
 | `/problems` | 题目列表 | 需登录 | 表格展示 id/标题/难度, 点击进入详情 |
 | `/problem/:id` | 题目详情 + 提交 | 需登录 | 左侧题目描述, 右侧代码 `<textarea>` + 提交按钮, 下方判题结果 |
 | `/admin` | 管理面板 | admin | 题目列表 + 新建题目入口 + 管理用户入口 |
@@ -259,30 +281,28 @@ submit(code) ──→ g++ code.cpp -o prog
 
 ### 6.2 技术约束
 
-- **纯原生 HTML + CSS**：不引入任何 JS/CSS 框架或 CDN
-- **交互模式**：传统 `<form>` 提交 + 服务端返回新页面 / 重定向
-- **无 AJAX**：不使用 `fetch()` / `XMLHttpRequest`
+- **纯原生 HTML + CSS + JS**：不引入任何 JS/CSS 框架或 CDN
+- **交互模式**：GET 请求返回完整 HTML 页面；POST 请求通过 `fetch()` 发送 JSON，接收 JSON 响应，前端 JS 处理结果
 - **代码编辑器**：`<textarea>` (无语法高亮)
 - **Markdown 渲染**：服务端 C++ 侧做简易 Markdown→HTML 转换（支持标题/代码块/段落/加粗/列表即可）
 - **导航栏**：服务端根据登录状态和 role 动态渲染（登录前显示 首页/登录/注册，登录后显示 题目列表/用户名/登出，admin 额外显示 管理后台）
+- **JSON 解析**：服务端使用 `nlohmann/json` 解析请求体和构造响应体
 
-### 6.3 UI 布局 (题目详情页 — 服务端渲染单页)
+### 6.3 UI 布局 (题目详情页 — 服务端渲染 + JS JSON 交互)
 
 ```
 ┌──────────────────────────────────────────────┐
 │  [OJ Logo] 首页 题目列表  |  admin (登出)          │  ← 导航栏 (服务端拼)
 ├──────────────────────┬───────────────────────┤
-│  题目描述 (HTML)      │  <form method="POST"  │
-│                      │   action="/problem/   │
-│  # 两数之和           │   :id/submit">        │
-│                      │   <textarea           │
-│  给定一个整数数组...   │    name="code">       │
-│                      │   </textarea>         │
-│  **示例:**            │   <button>提交</button>│
-│  输入: 1 2           │  </form>              │
-│  输出: 3             │                       │
-│                      │  ── 判题结果 ──        │  ← 服务端注入
-│                      │  状态: WA             │
+│  题目描述 (HTML)      │  <textarea            │
+│                      │   id="code-editor">    │
+│  # 两数之和           │  </textarea>           │
+│                      │  <button               │
+│  给定一个整数数组...   │   onclick="submitCode()"│
+│                      │  >提交</button>         │
+│  **示例:**            │                       │
+│  输入: 1 2           │  ── 判题结果 ──         │  ← JS 动态注入
+│  输出: 3             │  状态: WA             │
 │                      │  用时: 42ms           │
 │                      │  用例 #3 失败:        │
 │                      │   期望: 3             │
@@ -290,12 +310,13 @@ submit(code) ──→ g++ code.cpp -o prog
 └──────────────────────┴───────────────────────┘
 ```
 
-### 6.4 服务端 HTML 渲染方式
+### 6.4 渲染方式
 
-- 静态部分：直接写在 `.html` 模板文件中，C++ 读取后替换 `{{KEY}}` 占位符
-- 动态数据（题目列表/用户列表/判题结果）：C++ 循环拼接 HTML 片段，插入 `{{BODY}}` 占位符
-- 公共布局（导航栏、页脚）：抽成 C++ 函数 `render_page(title, body_html)` 统一包裹
-- `static/style.css`：独立 CSS 文件，直接通过 `<link>` 引用
+- **GET 页面**: 服务端 C++ 读取 `.html` 模板 → 替换 `{{KEY}}` 占位符 → 返回完整 HTML
+- **POST 接口**: 服务端解析 JSON 请求 → 执行业务逻辑 → 返回 JSON 响应，前端 JS 根据响应更新 DOM
+- **公共布局**（导航栏、页脚）：C++ 函数 `render_page(title, body_html)` 统一包裹
+- `static/style.css`：独立 CSS 文件，通过 `<link>` 引用
+- `static/app.js`：前端交互逻辑 (fetch JSON API, DOM 更新)
 
 ---
 
@@ -312,7 +333,8 @@ vibe-oj/
 ├── judge.h / judge.cc         # 判题引擎核心 (编译 + 沙箱执行)
 ├── config.h                   # 数据库连接串, 判题限制常量
 ├── static/
-│   └── style.css              # 全局样式 (唯一静态文件)
+│   ├── style.css              # 全局样式 (唯一 CSS 文件)
+│   └── app.js                 # 前端交互逻辑 (fetch API, DOM 操作)
 ├── templates/                 # HTML 模板文件 (含 {{PLACEHOLDER}})
 │   ├── landing.html            # 首页落地页 ({{PROBLEM_COUNT}}, {{USER_COUNT}})
 │   ├── login.html
@@ -323,10 +345,8 @@ vibe-oj/
 │   ├── admin_problem_form.html # 新建/编辑题目表单
 │   ├── admin_testcases.html    # 用例管理
 │   └── admin_users.html        # 用户列表
-├── deps/                      # 第三方库
-│   ├── cpp-httplib/           # header-only HTTP server
-│   ├── bcrypt/                # bcrypt 实现
-│   └── json.hpp               # nlohmann/json (辅助 Markdown 或数据转换)
+├── deps/                      # 第三方库 (header-only)
+│   └── cpp-httplib/           # header-only HTTP server
 ├── Makefile                   # 构建 (all / test / clean / run)
 ├── tests/                     # 单元测试 (Google Test, 每 Phase 分步运行)
 │   ├── test_config.cc
@@ -339,9 +359,10 @@ vibe-oj/
 ```
 
 **依赖库**:
-- `cpp-httplib` (header-only HTTP server)
+- `cpp-httplib` (header-only HTTP server, vendored in `deps/`)
 - `mysqlclient` (libmysqlclient-dev, `-lmysqlclient`)
-- `bcrypt` (openwall/crypt_blowfish 或 libsodium)
+- `nlohmann/json` (nlohmann-json3-dev, 系统包, JSON 解析/序列化)
+- `crypt` (系统 `<crypt.h>`, bcrypt 密码哈希)
 - `gtest` (libgtest-dev, unit testing framework)
 - `<sys/resource.h>`, `<seccomp.h>` (libseccomp-dev)
 
@@ -397,17 +418,17 @@ vibe-oj/
 - [x] 运行 `make test` 全部通过 (68/68)
 
 ### Phase 5: 判题引擎 (核心)
-- [ ] 实现 `judge.h/judge.cc`:
-  - [ ] `compile(src_path, bin_path)` → g++ 静态编译, 返回编译结果/错误信息
-  - [ ] `judge(bin_path, test_case)` → fork + rlimit + seccomp + 比对
-  - [ ] 资源限制: RLIMIT_CPU, RLIMIT_AS, RLIMIT_NPROC, RLIMIT_FSIZE
-  - [ ] seccomp: 白名单 syscall (read/write/exit/brk/mmap/futex/...)
-  - [ ] chroot: 创建临时空目录 `/tmp/vibe-oj/judge-XXXXXX/`, 拷贝 prog, `g++ -static` 编译
-  - [ ] stdin/stdout 通过 pipe 传递, waitpid 超时 2000ms
-  - [ ] 判断 exit code / signal → 映射到 AC/WA/TLE/MLE/RE
-  - [ ] 比对输出: trim trailing whitespace, 精确匹配
-- [ ] 编写 `tests/test_judge.cc` 单元测试 (编译/沙箱/超时/信号/输出比对)
-- [ ] 运行 `make test` 全部通过
+- [x] 实现 `judge.h/judge.cc`:
+  - [x] `compile(src_path, bin_path)` → g++ 静态编译, 返回编译结果/错误信息
+  - [x] `judge(bin_path, test_case)` → fork + rlimit + seccomp + 比对
+  - [x] 资源限制: RLIMIT_CPU, RLIMIT_AS, RLIMIT_NPROC, RLIMIT_FSIZE
+  - [x] seccomp: 白名单 syscall (read/write/exit/brk/mmap/futex/...)
+  - [x] chroot: 创建临时空目录 `./.judge-tmp/judge-XXXXXX/`, 拷贝 prog, `g++ -static` 编译
+  - [x] stdin/stdout 通过 pipe 传递, waitpid 超时 2000ms
+  - [x] 判断 exit code / signal → 映射到 AC/WA/TLE/MLE/RE
+  - [x] 比对输出: trim trailing whitespace, 精确匹配
+- [x] 编写 `tests/test_judge.cc` 单元测试 (编译/沙箱/超时/信号/输出比对)
+- [x] 运行 `make test` 全部通过 (83/83)
 
 ### Phase 6: HTML 模板
 - [ ] `templates/landing.html` (首页落地页: OJ 名称/简介/功能亮点/统计数据/CTA 按钮, 含 `{{PROBLEM_COUNT}}`, `{{USER_COUNT}}`)
@@ -486,6 +507,8 @@ vibe-oj/
 - ❌ 不支持用户删除/重置密码 (管理员不可删除用户)
 - ❌ 不做 Docker 化部署
 - ❌ 不做定时任务/通知/邮件
+- ❌ 不引入前端框架 (React/Vue 等), 仅原生 JS fetch
+- ❌ 不做 JSON Web Token (JWT), 使用 Cookie + Session
 
 ---
 
@@ -503,3 +526,4 @@ vibe-oj/
 ---
 
 > **版本**: v1.0 | **日期**: 2026-06-02 | **下次评审**: MVP 完成后
+  

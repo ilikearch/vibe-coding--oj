@@ -6,12 +6,11 @@ MYSQL_LIBS := $(shell mysql_config --libs 2>/dev/null || pkg-config --libs mysql
 
 GTEST_LIBS = -lgtest -lgtest_main -lpthread
 
-DEPS = deps/cpp-httplib/httplib.h deps/json.hpp
+DEPS = deps/cpp-httplib/httplib.h
 
 OBJS = db.o render.o md.o log.o auth.o judge.o server.o
 LIB_OBJS = db.o render.o md.o log.o auth.o judge.o
-TEST_OBJS = tests/test_config.o tests/test_render.o tests/test_md.o tests/test_db.o tests/test_auth.o
-# Phase 5 添加: tests/test_judge.o
+TEST_OBJS = tests/test_config.o tests/test_render.o tests/test_md.o tests/test_db.o tests/test_auth.o tests/test_judge.o
 
 TARGET = server
 TEST_TARGET = tests/run_tests
@@ -27,7 +26,7 @@ test: $(TEST_TARGET)
 	./$(TEST_TARGET)
 
 $(TEST_TARGET): $(LIB_OBJS) $(TEST_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(MYSQL_LIBS) $(GTEST_LIBS) -lcrypt
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(MYSQL_LIBS) $(GTEST_LIBS) -lseccomp -lcrypt
 
 tests/test_config.o: tests/test_config.cc config.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@

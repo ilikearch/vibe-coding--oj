@@ -39,6 +39,7 @@ std::string render_page(const std::string& title, const std::string& body,
            << "<link rel=\"stylesheet\" href=\"/style.css\">\n</head>\n<body>\n"
            << "<nav>" << nav_html << "</nav>\n"
            << "<main>\n" << body << "\n</main>\n"
+           << "<script src=\"/app.js\"></script>\n"
            << "</body>\n</html>";
         return ss.str();
     }

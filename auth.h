@@ -28,11 +28,33 @@ std::string get_cookie(const std::string& cookie_header, const std::string& key)
         session = get_session(sid); \
         if (!session) { res.set_redirect("/login"); return; } \
     } while(0)
+
 #define CHECK_ADMIN(res) \
     do { \
         if (!session || session->role != "admin") { \
             res.status = 403; \
             res.set_content("<h1>403 Forbidden</h1>", "text/html"); \
+            return; \
+        } \
+    } while(0)
+
+#define CHECK_AUTH_JSON(req, res) \
+    Session* session = nullptr; \
+    do { \
+        std::string sid = get_cookie(req.get_header_value("Cookie"), "session_id"); \
+        session = get_session(sid); \
+        if (!session) { \
+            res.status = 401; \
+            res.set_content("{\"success\":false,\"error\":\"Unauthorized\"}", "application/json"); \
+            return; \
+        } \
+    } while(0)
+
+#define CHECK_ADMIN_JSON(res) \
+    do { \
+        if (!session || session->role != "admin") { \
+            res.status = 403; \
+            res.set_content("{\"success\":false,\"error\":\"Forbidden\"}", "application/json"); \
             return; \
         } \
     } while(0)

@@ -1,4 +1,5 @@
 #include "deps/cpp-httplib/httplib.h"
+#include <nlohmann/json.hpp>
 #include "config.h"
 #include "db.h"
 #include "render.h"
@@ -8,7 +9,9 @@
 #include "log.h"
 #include <iostream>
 
+using json = nlohmann::json;
 static Database db;
+
 static std::string nav_public() {
     return "<a href=\"/\">Home</a> | <a href=\"/login\">Login</a> | <a href=\"/register\">Register</a>";
 }
@@ -22,6 +25,8 @@ int main() {
     LOG_INFO("Vibe OJ Server starting on port 8080...");
     std::cout << "Vibe OJ Server starting on port 8080..." << std::endl;
     httplib::Server svr;
+
+    svr.set_mount_point("/", "./static");
 
     svr.Get("/", [](const httplib::Request& req, httplib::Response& res) {
         std::string sid = get_cookie(req.get_header_value("Cookie"), "session_id");
@@ -50,100 +55,75 @@ int main() {
     });
 
     svr.Get("/login", [](const httplib::Request&, httplib::Response& res) {
-        std::string tmpl = read_template("templates/login.html");
-        if (tmpl.empty()) {
-            tmpl = "<h1>Login</h1>"
-                   "<form method=\"POST\" action=\"/login\">"
-                   "<input name=\"username\" placeholder=\"Username\"><br>"
-                   "<input type=\"password\" name=\"password\" placeholder=\"Password\"><br>"
-                   "<button type=\"submit\">Login</button>"
-                   "</form>";
-        }
-        tmpl = replace(tmpl, "ERROR", "");
-        res.set_content(render_page("Login", tmpl, nav_public()), "text/html");
+        std::string body =
+            "<h1>Login</h1>"
+            "<div id=\"login-error\" style=\"color:red\"></div>"
+            "<input id=\"login-username\" placeholder=\"Username\"><br><br>"
+            "<input id=\"login-password\" type=\"password\" placeholder=\"Password\"><br><br>"
+            "<button onclick=\"doLogin()\">Login</button>";
+        res.set_content(render_page("Login", body, nav_public()), "text/html");
     });
 
     svr.Post("/login", [](const httplib::Request& req, httplib::Response& res) {
-        std::string username = req.get_param_value("username");
-        std::string password = req.get_param_value("password");
-        User user = db.get_user_by_username(username);
-        if (user.id == 0 || !bcrypt_verify(password, user.password)) {
-            LOG_WARN("login failed: username=" + username);
-            std::string tmpl = read_template("templates/login.html");
-            if (tmpl.empty()) {
-                tmpl = "<h1>Login</h1>"
-                       "<p style=\"color:red\">Invalid username or password</p>"
-                       "<form method=\"POST\" action=\"/login\">"
-                       "<input name=\"username\" placeholder=\"Username\"><br>"
-                       "<input type=\"password\" name=\"password\" placeholder=\"Password\"><br>"
-                       "<button type=\"submit\">Login</button>"
-                       "</form>";
-            } else {
-                tmpl = replace(tmpl, "ERROR", "<p style=\"color:red\">Invalid username or password</p>");
+        try {
+            json body = json::parse(req.body);
+            std::string username = body.value("username", "");
+            std::string password = body.value("password", "");
+            User user = db.get_user_by_username(username);
+            if (user.id == 0 || !bcrypt_verify(password, user.password)) {
+                LOG_WARN("login failed: username=" + username);
+                json resp = {{"success", false}, {"error", "Invalid credentials"}};
+                res.set_content(resp.dump(), "application/json");
+                return;
             }
-            res.set_content(render_page("Login", tmpl, nav_public()), "text/html");
-            return;
+            std::string token = create_session(user.id, user.username, user.role);
+            LOG_INFO("login success: username=" + user.username);
+            res.set_header("Set-Cookie", "session_id=" + token + "; Path=/; HttpOnly");
+            json resp = {{"success", true}, {"redirect", "/problems"}};
+            res.set_content(resp.dump(), "application/json");
+        } catch (const std::exception& e) {
+            res.status = 400;
+            json resp = {{"success", false}, {"error", std::string("Bad request: ") + e.what()}};
+            res.set_content(resp.dump(), "application/json");
         }
-        std::string token = create_session(user.id, user.username, user.role);
-        LOG_INFO("login success: username=" + user.username);
-        res.set_header("Set-Cookie", "session_id=" + token + "; Path=/; HttpOnly");
-        res.set_redirect("/problems");
     });
 
     svr.Get("/register", [](const httplib::Request&, httplib::Response& res) {
-        std::string tmpl = read_template("templates/register.html");
-        if (tmpl.empty()) {
-            tmpl = "<h1>Register</h1>"
-                   "<form method=\"POST\" action=\"/register\">"
-                   "<input name=\"username\" placeholder=\"Username\"><br>"
-                   "<input type=\"password\" name=\"password\" placeholder=\"Password\"><br>"
-                   "<button type=\"submit\">Register</button>"
-                   "</form>";
-        }
-        tmpl = replace(tmpl, "ERROR", "");
-        res.set_content(render_page("Register", tmpl, nav_public()), "text/html");
+        std::string body =
+            "<h1>Register</h1>"
+            "<div id=\"register-error\" style=\"color:red\"></div>"
+            "<input id=\"register-username\" placeholder=\"Username\"><br><br>"
+            "<input id=\"register-password\" type=\"password\" placeholder=\"Password\"><br><br>"
+            "<button onclick=\"doRegister()\">Register</button>";
+        res.set_content(render_page("Register", body, nav_public()), "text/html");
     });
 
     svr.Post("/register", [](const httplib::Request& req, httplib::Response& res) {
-        std::string username = req.get_param_value("username");
-        std::string password = req.get_param_value("password");
-        if (username.empty() || password.empty()) {
-            std::string tmpl = read_template("templates/register.html");
-            if (tmpl.empty()) {
-                tmpl = "<h1>Register</h1>"
-                       "<p style=\"color:red\">All fields required</p>"
-                       "<form method=\"POST\" action=\"/register\">"
-                       "<input name=\"username\" placeholder=\"Username\"><br>"
-                       "<input type=\"password\" name=\"password\" placeholder=\"Password\"><br>"
-                       "<button type=\"submit\">Register</button>"
-                       "</form>";
-            } else {
-                tmpl = replace(tmpl, "ERROR", "<p style=\"color:red\">All fields required</p>");
+        try {
+            json body = json::parse(req.body);
+            std::string username = body.value("username", "");
+            std::string password = body.value("password", "");
+            if (username.empty() || password.empty()) {
+                json resp = {{"success", false}, {"error", "All fields required"}};
+                res.set_content(resp.dump(), "application/json");
+                return;
             }
-            res.set_content(render_page("Register", tmpl, nav_public()), "text/html");
-            return;
-        }
-        User existing = db.get_user_by_username(username);
-        if (existing.id != 0) {
-            std::string tmpl = read_template("templates/register.html");
-            if (tmpl.empty()) {
-                tmpl = "<h1>Register</h1>"
-                       "<p style=\"color:red\">Username already taken</p>"
-                       "<form method=\"POST\" action=\"/register\">"
-                       "<input name=\"username\" placeholder=\"Username\"><br>"
-                       "<input type=\"password\" name=\"password\" placeholder=\"Password\"><br>"
-                       "<button type=\"submit\">Register</button>"
-                       "</form>";
-            } else {
-                tmpl = replace(tmpl, "ERROR", "<p style=\"color:red\">Username already taken</p>");
+            User existing = db.get_user_by_username(username);
+            if (existing.id != 0) {
+                json resp = {{"success", false}, {"error", "Username already taken"}};
+                res.set_content(resp.dump(), "application/json");
+                return;
             }
-            res.set_content(render_page("Register", tmpl, nav_public()), "text/html");
-            return;
+            std::string hash = bcrypt_hash(password);
+            db.insert_user(username, hash);
+            LOG_INFO("user registered: username=" + username);
+            json resp = {{"success", true}, {"redirect", "/login"}};
+            res.set_content(resp.dump(), "application/json");
+        } catch (const std::exception& e) {
+            res.status = 400;
+            json resp = {{"success", false}, {"error", std::string("Bad request: ") + e.what()}};
+            res.set_content(resp.dump(), "application/json");
         }
-        std::string hash = bcrypt_hash(password);
-        db.insert_user(username, hash);
-        LOG_INFO("user registered: username=" + username);
-        res.set_redirect("/login");
     });
 
     svr.Get("/logout", [](const httplib::Request& req, httplib::Response& res) {
@@ -189,7 +169,6 @@ int main() {
                 if (i < cases.size() - 1) sample_html += "<hr>";
             }
         }
-        std::string template_code = p.template_code;
         std::string body =
             "<div style=\"display:flex; gap:40px;\">"
             "<div style=\"flex:1;\">"
@@ -200,83 +179,58 @@ int main() {
             "</div>"
             "<div style=\"flex:1;\">"
             "<h2>Submit Solution</h2>"
-            "<form method=\"POST\" action=\"/problem/" + std::to_string(id) + "/submit\">"
-            "<textarea name=\"code\" rows=\"20\" cols=\"60\" style=\"width:100%\">" + template_code + "</textarea><br><br>"
-            "<button type=\"submit\">Submit</button>"
-            "</form>"
-            "<div id=\"result\"></div>"
+            "<textarea id=\"code-area\" rows=\"20\" style=\"width:100%\">" + p.template_code + "</textarea><br><br>"
+            "<button onclick=\"submitCode(" + std::to_string(id) + ")\">Submit</button>"
+            "<div id=\"submit-result\"></div>"
             "</div>"
             "</div>";
         res.set_content(render_page(p.title, body, nav_user(session->username, session->role == "admin")), "text/html");
     });
 
     svr.Post(R"(/problem/(\d+)/submit)", [](const httplib::Request& req, httplib::Response& res) {
-        CHECK_AUTH(req, res);
-        int id = std::stoi(req.matches[1]);
-        Problem p = db.get_problem(id);
-        if (p.id == 0) { res.status = 404; res.set_content("<h1>404 Not Found</h1>", "text/html"); return; }
-        std::string code = req.get_param_value("code");
-        if (code.empty()) {
-            res.status = 400;
-            res.set_content("<h1>400 Bad Request</h1><p>Code is required.</p>", "text/html");
-            return;
-        }
-        auto cases = db.get_test_cases(id);
-        std::vector<JudgeCase> judge_cases;
-        for (const auto& tc : cases) {
-            JudgeCase jc;
-            jc.input = tc.input;
-            jc.expected = tc.expected;
-            judge_cases.push_back(jc);
-        }
-        JudgeResult jr = compile_and_judge(code, judge_cases);
-        std::string result_html = "<h3>Result</h3>";
-        std::string color;
-        if (jr.status == "AC") color = "green";
-        else if (jr.status == "CE") color = "#c0a000";
-        else color = "red";
-        result_html += "<p style=\"color:" + color + "; font-size:1.2em; font-weight:bold\">" + jr.status + "</p>";
-        if (jr.status == "CE") {
-            result_html += "<pre>" + jr.compile_error + "</pre>";
-        } else if (jr.status == "WA") {
-            result_html += "<p>Failed on test case #" + std::to_string(jr.failed_case) + "</p>";
-            result_html += "<p><strong>Expected:</strong></p><pre>" + jr.expected_output + "</pre>";
-            result_html += "<p><strong>Actual:</strong></p><pre>" + jr.actual_output + "</pre>";
-        }
-        if (jr.time_ms > 0) {
-            result_html += "<p>Time: " + std::to_string(jr.time_ms) + "ms</p>";
-        }
-        std::string desc_html = md_to_html(p.content);
-        auto cases_list = db.get_test_cases(id);
-        std::string sample_html;
-        if (!cases_list.empty()) {
-            sample_html += "<h3>Sample Test Cases</h3>";
-            for (size_t i = 0; i < cases_list.size(); i++) {
-                sample_html += "<p><strong>Input:</strong></p><pre>" + cases_list[i].input + "</pre>"
-                               "<p><strong>Expected:</strong></p><pre>" + cases_list[i].expected + "</pre>";
-                if (i < cases_list.size() - 1) sample_html += "<hr>";
+        CHECK_AUTH_JSON(req, res);
+        try {
+            json body = json::parse(req.body);
+            std::string code = body.value("code", "");
+            int id = std::stoi(req.matches[1]);
+            if (code.empty()) {
+                json resp = {{"success", false}, {"error", "Code is required"}};
+                res.status = 400;
+                res.set_content(resp.dump(), "application/json");
+                return;
             }
+            auto cases = db.get_test_cases(id);
+            if (cases.empty()) {
+                json resp = {{"success", false}, {"error", "No test cases for this problem"}};
+                res.set_content(resp.dump(), "application/json");
+                return;
+            }
+            std::vector<JudgeCase> judge_cases;
+            for (const auto& tc : cases) {
+                JudgeCase jc;
+                jc.input = tc.input;
+                jc.expected = tc.expected;
+                judge_cases.push_back(jc);
+            }
+            JudgeResult jr = compile_and_judge(code, judge_cases);
+            json resp = {
+                {"status", jr.status},
+                {"time_ms", jr.time_ms},
+                {"memory_kb", jr.memory_kb},
+                {"failed_case", jr.failed_case},
+                {"expected_output", jr.expected_output},
+                {"actual_output", jr.actual_output},
+                {"compile_error", jr.compile_error}
+            };
+            res.set_content(resp.dump(), "application/json");
+        } catch (const std::exception& e) {
+            res.status = 400;
+            json resp = {{"success", false}, {"error", std::string("Bad request: ") + e.what()}};
+            res.set_content(resp.dump(), "application/json");
         }
-        std::string template_code = p.template_code;
-        std::string body =
-            "<div style=\"display:flex; gap:40px;\">"
-            "<div style=\"flex:1;\">"
-            "<h1>" + p.title + "</h1>"
-            "<span class=\"difficulty " + p.difficulty + "\">" + p.difficulty + "</span>"
-            "<div>" + desc_html + "</div>"
-            + sample_html +
-            "</div>"
-            "<div style=\"flex:1;\">"
-            "<h2>Submit Solution</h2>"
-            "<form method=\"POST\" action=\"/problem/" + std::to_string(id) + "/submit\">"
-            "<textarea name=\"code\" rows=\"20\" cols=\"60\" style=\"width:100%\">" + code + "</textarea><br><br>"
-            "<button type=\"submit\">Submit</button>"
-            "</form>"
-            + result_html +
-            "</div>"
-            "</div>";
-        res.set_content(render_page(p.title + " - Result", body, nav_user(session->username, session->role == "admin")), "text/html");
     });
+
+    // ==================== Admin Routes ====================
 
     svr.Get("/admin", [](const httplib::Request& req, httplib::Response& res) {
         CHECK_AUTH(req, res);
@@ -291,9 +245,7 @@ int main() {
                     "<td>"
                     "<a href=\"/admin/problems/" + std::to_string(p.id) + "/edit\">Edit</a> | "
                     "<a href=\"/admin/problems/" + std::to_string(p.id) + "/testcases\">Test Cases</a> | "
-                    "<form method=\"POST\" action=\"/admin/problems/" + std::to_string(p.id) + "/delete\" style=\"display:inline\">"
-                    "<button type=\"submit\" onclick=\"return confirm('Delete this problem?')\">Delete</button>"
-                    "</form>"
+                    "<button onclick=\"deleteProblem(" + std::to_string(p.id) + ")\">Delete</button>"
                     "</td></tr>";
         }
         std::string body = "<h1>Admin Panel</h1>"
@@ -308,37 +260,45 @@ int main() {
         CHECK_AUTH(req, res);
         CHECK_ADMIN(res);
         std::string body = "<h1>New Problem</h1>"
-                           "<form method=\"POST\" action=\"/admin/problems\">"
-                           "<label>Title:</label><br><input name=\"title\" required><br><br>"
+                           "<label>Title:</label><br><input id=\"prob-title\" required><br><br>"
                            "<label>Difficulty:</label><br>"
-                           "<select name=\"difficulty\">"
+                           "<select id=\"prob-difficulty\">"
                            "<option>Easy</option><option>Medium</option><option>Hard</option>"
                            "</select><br><br>"
                            "<label>Description (Markdown):</label><br>"
-                           "<textarea name=\"content\" rows=\"10\" cols=\"60\"></textarea><br><br>"
+                           "<textarea id=\"prob-content\" rows=\"10\" cols=\"60\"></textarea><br><br>"
                            "<label>Code Template (optional):</label><br>"
-                           "<textarea name=\"template\" rows=\"6\" cols=\"60\"></textarea><br><br>"
-                           "<button type=\"submit\">Create</button>"
-                           "</form>"
+                           "<textarea id=\"prob-template\" rows=\"6\" cols=\"60\"></textarea><br><br>"
+                           "<button onclick=\"createProblem()\">Create</button>"
+                           "<div id=\"form-result\"></div>"
                            "<p><a href=\"/admin\">Back</a></p>";
         res.set_content(render_page("New Problem", body, nav_user(session->username, true)), "text/html");
     });
 
     svr.Post("/admin/problems", [](const httplib::Request& req, httplib::Response& res) {
-        CHECK_AUTH(req, res);
-        CHECK_ADMIN(res);
-        std::string title = req.get_param_value("title");
-        std::string difficulty = req.get_param_value("difficulty");
-        std::string content = req.get_param_value("content");
-        std::string template_code = req.get_param_value("template");
-        if (title.empty() || difficulty.empty() || content.empty()) {
+        CHECK_AUTH_JSON(req, res);
+        CHECK_ADMIN_JSON(res);
+        try {
+            json body = json::parse(req.body);
+            std::string title = body.value("title", "");
+            std::string difficulty = body.value("difficulty", "");
+            std::string content = body.value("content", "");
+            std::string template_code = body.value("template", "");
+            if (title.empty() || difficulty.empty() || content.empty()) {
+                json resp = {{"success", false}, {"error", "Title, difficulty, and content are required"}};
+                res.status = 400;
+                res.set_content(resp.dump(), "application/json");
+                return;
+            }
+            int id = db.insert_problem(title, difficulty, content, template_code);
+            LOG_INFO("problem created: id=" + std::to_string(id) + " title=" + title);
+            json resp = {{"success", true}, {"id", id}, {"redirect", "/admin"}};
+            res.set_content(resp.dump(), "application/json");
+        } catch (const std::exception& e) {
             res.status = 400;
-            res.set_content("<h1>400 Bad Request</h1><p>Title, difficulty, and content are required.</p>", "text/html");
-            return;
+            json resp = {{"success", false}, {"error", std::string("Bad request: ") + e.what()}};
+            res.set_content(resp.dump(), "application/json");
         }
-        int id = db.insert_problem(title, difficulty, content, template_code);
-        LOG_INFO("problem created: id=" + std::to_string(id) + " title=" + title);
-        res.set_redirect("/admin");
     });
 
     svr.Get(R"(/admin/problems/(\d+)/edit)", [](const httplib::Request& req, httplib::Response& res) {
@@ -349,51 +309,65 @@ int main() {
         if (p.id == 0) { res.status = 404; res.set_content("<h1>404 Not Found</h1>", "text/html"); return; }
         auto selected = [&](const std::string& d) { return p.difficulty == d ? " selected" : ""; };
         std::string body = "<h1>Edit Problem #" + std::to_string(id) + "</h1>"
-                           "<form method=\"POST\" action=\"/admin/problems/" + std::to_string(id) + "/edit\">"
-                           "<label>Title:</label><br><input name=\"title\" value=\"" + p.title + "\" required><br><br>"
+                           "<label>Title:</label><br><input id=\"prob-title\" value=\"" + p.title + "\" required><br><br>"
                            "<label>Difficulty:</label><br>"
-                           "<select name=\"difficulty\">"
+                           "<select id=\"prob-difficulty\">"
                            "<option" + selected("Easy") + ">Easy</option>"
                            "<option" + selected("Medium") + ">Medium</option>"
                            "<option" + selected("Hard") + ">Hard</option>"
                            "</select><br><br>"
                            "<label>Description (Markdown):</label><br>"
-                           "<textarea name=\"content\" rows=\"10\" cols=\"60\">" + p.content + "</textarea><br><br>"
+                           "<textarea id=\"prob-content\" rows=\"10\" cols=\"60\">" + p.content + "</textarea><br><br>"
                            "<label>Code Template (optional):</label><br>"
-                           "<textarea name=\"template\" rows=\"6\" cols=\"60\">" + p.template_code + "</textarea><br><br>"
-                           "<button type=\"submit\">Save</button>"
-                           "</form>"
+                           "<textarea id=\"prob-template\" rows=\"6\" cols=\"60\">" + p.template_code + "</textarea><br><br>"
+                           "<button onclick=\"updateProblem(" + std::to_string(id) + ")\">Save</button>"
+                           "<div id=\"form-result\"></div>"
                            "<p><a href=\"/admin\">Back</a></p>";
         res.set_content(render_page("Edit Problem", body, nav_user(session->username, true)), "text/html");
     });
 
     svr.Post(R"(/admin/problems/(\d+)/edit)", [](const httplib::Request& req, httplib::Response& res) {
-        CHECK_AUTH(req, res);
-        CHECK_ADMIN(res);
-        int id = std::stoi(req.matches[1]);
-        std::string title = req.get_param_value("title");
-        std::string difficulty = req.get_param_value("difficulty");
-        std::string content = req.get_param_value("content");
-        std::string template_code = req.get_param_value("template");
-        if (title.empty() || difficulty.empty() || content.empty()) {
+        CHECK_AUTH_JSON(req, res);
+        CHECK_ADMIN_JSON(res);
+        try {
+            int id = std::stoi(req.matches[1]);
+            json body = json::parse(req.body);
+            std::string title = body.value("title", "");
+            std::string difficulty = body.value("difficulty", "");
+            std::string content = body.value("content", "");
+            std::string template_code = body.value("template", "");
+            if (title.empty() || difficulty.empty() || content.empty()) {
+                json resp = {{"success", false}, {"error", "Title, difficulty, and content are required"}};
+                res.status = 400;
+                res.set_content(resp.dump(), "application/json");
+                return;
+            }
+            db.update_problem(id, title, difficulty, content, template_code);
+            LOG_INFO("problem updated: id=" + std::to_string(id) + " title=" + title);
+            json resp = {{"success", true}, {"redirect", "/admin"}};
+            res.set_content(resp.dump(), "application/json");
+        } catch (const std::exception& e) {
             res.status = 400;
-            res.set_content("<h1>400 Bad Request</h1><p>Title, difficulty, and content are required.</p>", "text/html");
-            return;
+            json resp = {{"success", false}, {"error", std::string("Bad request: ") + e.what()}};
+            res.set_content(resp.dump(), "application/json");
         }
-        db.update_problem(id, title, difficulty, content, template_code);
-        LOG_INFO("problem updated: id=" + std::to_string(id) + " title=" + title);
-        res.set_redirect("/admin");
     });
 
     svr.Post(R"(/admin/problems/(\d+)/delete)", [](const httplib::Request& req, httplib::Response& res) {
-        CHECK_AUTH(req, res);
-        CHECK_ADMIN(res);
+        CHECK_AUTH_JSON(req, res);
+        CHECK_ADMIN_JSON(res);
         int id = std::stoi(req.matches[1]);
         Problem p = db.get_problem(id);
-        if (p.id == 0) { res.status = 404; res.set_content("<h1>404 Not Found</h1>", "text/html"); return; }
+        if (p.id == 0) {
+            json resp = {{"success", false}, {"error", "Problem not found"}};
+            res.status = 404;
+            res.set_content(resp.dump(), "application/json");
+            return;
+        }
         db.delete_problem(id);
         LOG_INFO("problem deleted: id=" + std::to_string(id) + " title=" + p.title);
-        res.set_redirect("/admin");
+        json resp = {{"success", true}, {"redirect", "/admin"}};
+        res.set_content(resp.dump(), "application/json");
     });
 
     svr.Get(R"(/admin/problems/(\d+)/testcases)", [](const httplib::Request& req, httplib::Response& res) {
@@ -411,24 +385,20 @@ int main() {
                     "<td><pre>" + tc.input + "</pre></td>"
                     "<td><pre>" + tc.expected + "</pre></td>"
                     "<td>"
-                    "<form method=\"POST\" action=\"/admin/testcases/" + std::to_string(tc.id) + "/delete\" style=\"display:inline\">"
-                    "<input type=\"hidden\" name=\"problem_id\" value=\"" + std::to_string(problem_id) + "\">"
-                    "<button type=\"submit\" onclick=\"return confirm('Delete this test case?')\">Delete</button>"
-                    "</form>"
+                    "<button onclick=\"deleteTestCase(" + std::to_string(tc.id) + "," + std::to_string(problem_id) + ")\">Delete</button>"
                     "</td></tr>";
         }
         std::string body = "<h1>Test Cases for Problem #" + std::to_string(problem_id) + " - " + p.title + "</h1>"
                            "<p><a href=\"/admin\">Back to Admin</a></p>"
                            "<h2>Add Test Case</h2>"
-                           "<form method=\"POST\" action=\"/admin/problems/" + std::to_string(problem_id) + "/testcases\">"
                            "<label>Input (stdin):</label><br>"
-                           "<textarea name=\"input\" rows=\"4\" cols=\"50\"></textarea><br><br>"
+                           "<textarea id=\"tc-input\" rows=\"4\" cols=\"50\"></textarea><br><br>"
                            "<label>Expected Output (stdout):</label><br>"
-                           "<textarea name=\"expected\" rows=\"4\" cols=\"50\"></textarea><br><br>"
+                           "<textarea id=\"tc-expected\" rows=\"4\" cols=\"50\"></textarea><br><br>"
                            "<label>Position:</label><br>"
-                           "<input name=\"position\" type=\"number\" value=\"0\"><br><br>"
-                           "<button type=\"submit\">Add Test Case</button>"
-                           "</form>"
+                           "<input id=\"tc-position\" type=\"number\" value=\"0\"><br><br>"
+                           "<button onclick=\"addTestCase(" + std::to_string(problem_id) + ")\">Add Test Case</button>"
+                           "<div id=\"tc-result\"></div>"
                            "<h2>Test Cases</h2>"
                            "<table border=\"1\"><tr><th>ID</th><th>Pos</th><th>Input</th><th>Expected</th><th>Action</th></tr>" +
                            (rows.empty() ? "<tr><td colspan=\"5\">No test cases yet</td></tr>" : rows) +
@@ -437,31 +407,48 @@ int main() {
     });
 
     svr.Post(R"(/admin/problems/(\d+)/testcases)", [](const httplib::Request& req, httplib::Response& res) {
-        CHECK_AUTH(req, res);
-        CHECK_ADMIN(res);
-        int problem_id = std::stoi(req.matches[1]);
-        std::string input = req.get_param_value("input");
-        std::string expected = req.get_param_value("expected");
-        std::string pos_str = req.get_param_value("position");
-        int position = pos_str.empty() ? 0 : std::stoi(pos_str);
-        if (input.empty() || expected.empty()) {
+        CHECK_AUTH_JSON(req, res);
+        CHECK_ADMIN_JSON(res);
+        try {
+            int problem_id = std::stoi(req.matches[1]);
+            json body = json::parse(req.body);
+            std::string input = body.value("input", "");
+            std::string expected = body.value("expected", "");
+            int position = body.value("position", 0);
+            if (input.empty() || expected.empty()) {
+                json resp = {{"success", false}, {"error", "Input and expected output are required"}};
+                res.status = 400;
+                res.set_content(resp.dump(), "application/json");
+                return;
+            }
+            int id = db.insert_test_case(problem_id, input, expected, position);
+            LOG_INFO("test case added: problem_id=" + std::to_string(problem_id));
+            json resp = {{"success", true}, {"id", id}};
+            res.set_content(resp.dump(), "application/json");
+        } catch (const std::exception& e) {
             res.status = 400;
-            res.set_content("<h1>400 Bad Request</h1><p>Input and expected output are required.</p>", "text/html");
-            return;
+            json resp = {{"success", false}, {"error", std::string("Bad request: ") + e.what()}};
+            res.set_content(resp.dump(), "application/json");
         }
-        db.insert_test_case(problem_id, input, expected, position);
-        LOG_INFO("test case added: problem_id=" + std::to_string(problem_id));
-        res.set_redirect("/admin/problems/" + std::to_string(problem_id) + "/testcases");
     });
 
     svr.Post(R"(/admin/testcases/(\d+)/delete)", [](const httplib::Request& req, httplib::Response& res) {
-        CHECK_AUTH(req, res);
-        CHECK_ADMIN(res);
-        int case_id = std::stoi(req.matches[1]);
-        std::string problem_id = req.get_param_value("problem_id");
-        db.delete_test_case(case_id);
-        LOG_INFO("test case deleted: id=" + std::to_string(case_id));
-        res.set_redirect("/admin/problems/" + problem_id + "/testcases");
+        CHECK_AUTH_JSON(req, res);
+        CHECK_ADMIN_JSON(res);
+        try {
+            int case_id = std::stoi(req.matches[1]);
+            json body = json::parse(req.body);
+            int problem_id = body.value("problem_id", 0);
+            (void)problem_id;
+            db.delete_test_case(case_id);
+            LOG_INFO("test case deleted: id=" + std::to_string(case_id));
+            json resp = {{"success", true}};
+            res.set_content(resp.dump(), "application/json");
+        } catch (const std::exception& e) {
+            res.status = 400;
+            json resp = {{"success", false}, {"error", std::string("Bad request: ") + e.what()}};
+            res.set_content(resp.dump(), "application/json");
+        }
     });
 
     svr.Get("/admin/users", [](const httplib::Request& req, httplib::Response& res) {
@@ -484,7 +471,6 @@ int main() {
                            "</table>";
         res.set_content(render_page("Users", body, nav_user(session->username, true)), "text/html");
     });
-
     svr.listen("0.0.0.0", 8080);
     return 0;
 }

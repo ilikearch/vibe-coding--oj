@@ -11,9 +11,9 @@ struct JudgeCase {
 struct JudgeResult {
     std::string status;
     std::string compile_error;
-    int time_ms;
-    int memory_kb;
-    int failed_case;
+    int time_ms = 0;
+    int memory_kb = 0;
+    int failed_case = 0;
     std::string expected_output;
     std::string actual_output;
 };
