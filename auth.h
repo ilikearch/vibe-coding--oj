@@ -21,9 +21,8 @@ void destroy_session(const std::string& token);
 
 std::string get_cookie(const std::string& cookie_header, const std::string& key);
 
-#define REQUIRE_AUTH \
-    Session* session = nullptr
 #define CHECK_AUTH(req, res) \
+    Session* session = nullptr; \
     do { \
         std::string sid = get_cookie(req.get_header_value("Cookie"), "session_id"); \
         session = get_session(sid); \

@@ -376,25 +376,25 @@ vibe-oj/
 - [x] 运行 `make test` 全部通过 (62/62)
 
 ### Phase 3: 题目 CRUD (admin)
-- [ ] 实现: `GET /admin` (管理面板, 列出所有题目)
-- [ ] 实现: `GET /admin/problems/new` + `POST /admin/problems` (创建题目)
-- [ ] 实现: `GET /admin/problems/:id/edit` + `POST /admin/problems/:id/edit` (编辑题目)
-- [ ] 实现: `POST /admin/problems/:id/delete` (删除题目 + 级联用例)
-- [ ] 实现: `GET /admin/problems/:id/testcases` + `POST` (用例管理)
-- [ ] 实现: `POST /admin/testcases/:id/delete` (删除单个用例)
-- [ ] 实现: `GET /admin/users` (用户列表)
-- [ ] 更新 `tests/test_db.cc`: 补充 admin 操作的集成测试
-- [ ] 运行 `make test` 全部通过
+- [x] 实现: `GET /admin` (管理面板, 列出所有题目)
+- [x] 实现: `GET /admin/problems/new` + `POST /admin/problems` (创建题目)
+- [x] 实现: `GET /admin/problems/:id/edit` + `POST /admin/problems/:id/edit` (编辑题目)
+- [x] 实现: `POST /admin/problems/:id/delete` (删除题目 + 级联用例)
+- [x] 实现: `GET /admin/problems/:id/testcases` + `POST` (用例管理)
+- [x] 实现: `POST /admin/testcases/:id/delete` (删除单个用例)
+- [x] 实现: `GET /admin/users` (用户列表)
+- [x] 更新 `tests/test_db.cc`: 补充 admin 操作的集成测试
+- [x] 运行 `make test` 全部通过 (68/68)
 
 ### Phase 4: 用户端页面
-- [ ] 实现: `GET /` (首页落地页, 展示 OJ 简介 + 题目/用户统计 + CTA 按钮)
-- [ ] 实现: `GET /problems` (题目列表, 从 DB 查询 → 拼装 HTML 表格)
-- [ ] 实现: `GET /problem/:id` (题目详情页, 内含 `<form>` 提交区 + `<textarea name="code">`)
-- [ ] 实现: `POST /problem/:id/submit`:
-  - [ ] 接收 `code` 表单字段
-  - [ ] 调用判题引擎
-  - [ ] 将判题结果拼入同一页面的 `{{RESULT}}` 区, 返回完整 HTML
-- [ ] 运行 `make test` 全部通过
+- [x] 实现: `GET /` (首页落地页, 展示 OJ 简介 + 题目/用户统计 + CTA 按钮)
+- [x] 实现: `GET /problems` (题目列表, 从 DB 查询 → 拼装 HTML 表格)
+- [x] 实现: `GET /problem/:id` (题目详情页, 内含 `<form>` 提交区 + `<textarea name="code">`)
+- [x] 实现: `POST /problem/:id/submit`:
+  - [x] 接收 `code` 表单字段
+  - [x] 调用判题引擎
+  - [x] 将判题结果拼入同一页面的 `{{RESULT}}` 区, 返回完整 HTML
+- [x] 运行 `make test` 全部通过 (68/68)
 
 ### Phase 5: 判题引擎 (核心)
 - [ ] 实现 `judge.h/judge.cc`:

@@ -6,7 +6,7 @@ MYSQL_LIBS := $(shell mysql_config --libs 2>/dev/null || pkg-config --libs mysql
 
 GTEST_LIBS = -lgtest -lgtest_main -lpthread
 
-DEPS = deps/cpp-httplib/httplib.h deps/json.hpp deps/bcrypt/bcrypt.h
+DEPS = deps/cpp-httplib/httplib.h deps/json.hpp
 
 OBJS = db.o render.o md.o log.o auth.o judge.o server.o
 LIB_OBJS = db.o render.o md.o log.o auth.o judge.o
