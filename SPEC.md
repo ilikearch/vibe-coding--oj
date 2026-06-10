@@ -326,7 +326,14 @@ vibe-oj/
 │   ├── cpp-httplib/           # header-only HTTP server
 │   ├── bcrypt/                # bcrypt 实现
 │   └── json.hpp               # nlohmann/json (辅助 Markdown 或数据转换)
-├── Makefile                   # 构建
+├── Makefile                   # 构建 (all / test / clean / run)
+├── tests/                     # 单元测试 (Google Test, 每 Phase 分步运行)
+│   ├── test_config.cc
+│   ├── test_db.cc
+│   ├── test_render.cc
+│   ├── test_md.cc
+│   ├── test_auth.cc            # Phase 2 加入
+│   └── test_judge.cc           # Phase 5 加入
 └── SPEC.md
 ```
 
@@ -334,20 +341,25 @@ vibe-oj/
 - `cpp-httplib` (header-only HTTP server)
 - `mysqlclient` (libmysqlclient-dev, `-lmysqlclient`)
 - `bcrypt` (openwall/crypt_blowfish 或 libsodium)
+- `gtest` (libgtest-dev, unit testing framework)
 - `<sys/resource.h>`, `<seccomp.h>` (libseccomp-dev)
 
 ---
 
 ## 8. TODO 清单
 
+> **测试策略**: 每个 Phase 完成后立即运行 `make test`，确保新增功能不破坏已有测试。测试分步执行，不积累到 Phase 8 统一运行。
+
 ### Phase 1: 基础设施
-- [ ] 安装依赖: `libmysqlclient-dev`, `libseccomp-dev`
-- [ ] 初始化 MySQL 数据库, 执行 3 张建表语句
-- [ ] 编写 `config.h` (DB 连接串, 判题限制常量)
-- [ ] 编写 `db.h/db.cc` (MySQL 连接, query 封装)
-- [ ] 编写 `render.h/render.cc` (读取模板文件, `{{KEY}}` 字符串替换, `render_page()` 骨架函数)
-- [ ] 编写 `md.h/md.cc` (简易 Markdown→HTML: 标题/代码块/加粗/列表/段落)
-- [ ] 编写 `Makefile` (编译链接)
+- [x] 安装依赖: `libmysqlclient-dev`, `libseccomp-dev`
+- [x] 初始化 MySQL 数据库, 执行 3 张建表语句
+- [x] 编写 `config.h` (DB 连接串, 判题限制常量)
+- [x] 编写 `db.h/db.cc` (MySQL 连接, query 封装)
+- [x] 编写 `render.h/render.cc` (读取模板文件, `{{KEY}}` 字符串替换, `render_page()` 骨架函数)
+- [x] 编写 `md.h/md.cc` (简易 Markdown→HTML: 标题/代码块/加粗/列表/段落)
+- [x] 编写 `Makefile` (编译链接, 含 `make test` 单元测试目标)
+- [x] 编写 `tests/test_*.cc` 单元测试 (Google Test), 覆盖 db/render/md 模块
+- [x] 运行 `make test` 全部通过
 
 ### Phase 2: 认证系统
 - [ ] 编写 `auth.h/auth.cc`:
@@ -359,6 +371,8 @@ vibe-oj/
 - [ ] 实现: `GET/POST /login`
 - [ ] 实现: `GET/POST /register`
 - [ ] 实现: `GET /logout`
+- [ ] 编写 `tests/test_auth.cc` 单元测试覆盖 bcrypt/session/cookie/中间件
+- [ ] 运行 `make test` 全部通过
 
 ### Phase 3: 题目 CRUD (admin)
 - [ ] 实现: `GET /admin` (管理面板, 列出所有题目)
@@ -368,6 +382,8 @@ vibe-oj/
 - [ ] 实现: `GET /admin/problems/:id/testcases` + `POST` (用例管理)
 - [ ] 实现: `POST /admin/testcases/:id/delete` (删除单个用例)
 - [ ] 实现: `GET /admin/users` (用户列表)
+- [ ] 更新 `tests/test_db.cc`: 补充 admin 操作的集成测试
+- [ ] 运行 `make test` 全部通过
 
 ### Phase 4: 用户端页面
 - [ ] 实现: `GET /` (首页落地页, 展示 OJ 简介 + 题目/用户统计 + CTA 按钮)
@@ -377,6 +393,7 @@ vibe-oj/
   - [ ] 接收 `code` 表单字段
   - [ ] 调用判题引擎
   - [ ] 将判题结果拼入同一页面的 `{{RESULT}}` 区, 返回完整 HTML
+- [ ] 运行 `make test` 全部通过
 
 ### Phase 5: 判题引擎 (核心)
 - [ ] 实现 `judge.h/judge.cc`:
@@ -388,6 +405,8 @@ vibe-oj/
   - [ ] stdin/stdout 通过 pipe 传递, waitpid 超时 2000ms
   - [ ] 判断 exit code / signal → 映射到 AC/WA/TLE/MLE/RE
   - [ ] 比对输出: trim trailing whitespace, 精确匹配
+- [ ] 编写 `tests/test_judge.cc` 单元测试 (编译/沙箱/超时/信号/输出比对)
+- [ ] 运行 `make test` 全部通过
 
 ### Phase 6: HTML 模板
 - [ ] `templates/landing.html` (首页落地页: OJ 名称/简介/功能亮点/统计数据/CTA 按钮, 含 `{{PROBLEM_COUNT}}`, `{{USER_COUNT}}`)
@@ -403,10 +422,12 @@ vibe-oj/
 - [ ] `templates/admin_testcases.html` (用例列表 + 添加表单)
 - [ ] `templates/admin_users.html` (用户表格)
 - [ ] `static/style.css` (全局样式)
+- [ ] 运行 `make test` 全部通过
 
 ### Phase 7: 主服务器整合
 - [ ] `server.cc`: 注册所有路由 handler, 挂载 `static/` 目录, 启动 8080 端口
 - [ ] 并发: cpp-httplib 默认多线程 (无需手动管理)
+- [ ] 运行 `make test` 全部通过
 
 ### Phase 8: 测试 & 收尾
 - [ ] 编写测试题目数据 (至少 2 道: Easy + Medium)
