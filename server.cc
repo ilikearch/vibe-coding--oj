@@ -145,7 +145,7 @@ int main() {
             User user = db.get_user_by_username(username);
             if (user.id == 0 || !bcrypt_verify(password, user.password)) {
                 LOG_WARN("login failed: username=" + username);
-                json resp = {{"success", false}, {"error", "Invalid credentials"}};
+                json resp = {{"success", false}, {"error", "用户名或密码错误"}};
                 res.set_content(resp.dump(), "application/json");
                 return;
             }
@@ -156,7 +156,7 @@ int main() {
             res.set_content(resp.dump(), "application/json");
         } catch (const std::exception& e) {
             res.status = 400;
-            json resp = {{"success", false}, {"error", std::string("Bad request: ") + e.what()}};
+            json resp = {{"success", false}, {"error", std::string("请求格式错误: ") + e.what()}};
             res.set_content(resp.dump(), "application/json");
         }
     });
@@ -172,13 +172,13 @@ int main() {
             std::string username = body.value("username", "");
             std::string password = body.value("password", "");
             if (username.empty() || password.empty()) {
-                json resp = {{"success", false}, {"error", "All fields required"}};
+                json resp = {{"success", false}, {"error", "请填写所有字段"}};
                 res.set_content(resp.dump(), "application/json");
                 return;
             }
             User existing = db.get_user_by_username(username);
             if (existing.id != 0) {
-                json resp = {{"success", false}, {"error", "Username already taken"}};
+                json resp = {{"success", false}, {"error", "用户名已存在"}};
                 res.set_content(resp.dump(), "application/json");
                 return;
             }
@@ -189,7 +189,7 @@ int main() {
             res.set_content(resp.dump(), "application/json");
         } catch (const std::exception& e) {
             res.status = 400;
-            json resp = {{"success", false}, {"error", std::string("Bad request: ") + e.what()}};
+            json resp = {{"success", false}, {"error", std::string("请求格式错误: ") + e.what()}};
             res.set_content(resp.dump(), "application/json");
         }
     });
@@ -243,14 +243,14 @@ int main() {
             std::string code = body.value("code", "");
             int id = std::stoi(req.matches[1]);
             if (code.empty()) {
-                json resp = {{"success", false}, {"error", "Code is required"}};
+                json resp = {{"success", false}, {"error", "请填写代码"}};
                 res.status = 400;
                 res.set_content(resp.dump(), "application/json");
                 return;
             }
             auto cases = db.get_test_cases(id);
             if (cases.empty()) {
-                json resp = {{"success", false}, {"error", "No test cases for this problem"}};
+                json resp = {{"success", false}, {"error", "该题目暂无测试用例"}};
                 res.set_content(resp.dump(), "application/json");
                 return;
             }
@@ -274,7 +274,7 @@ int main() {
             res.set_content(resp.dump(), "application/json");
         } catch (const std::exception& e) {
             res.status = 400;
-            json resp = {{"success", false}, {"error", std::string("Bad request: ") + e.what()}};
+            json resp = {{"success", false}, {"error", std::string("请求格式错误: ") + e.what()}};
             res.set_content(resp.dump(), "application/json");
         }
     });
@@ -321,7 +321,7 @@ int main() {
             std::string content = body.value("content", "");
             std::string template_code = body.value("template", "");
             if (title.empty() || difficulty.empty() || content.empty()) {
-                json resp = {{"success", false}, {"error", "Title, difficulty, and content are required"}};
+                json resp = {{"success", false}, {"error", "请填写所有字段"}};
                 res.status = 400;
                 res.set_content(resp.dump(), "application/json");
                 return;
@@ -332,7 +332,7 @@ int main() {
             res.set_content(resp.dump(), "application/json");
         } catch (const std::exception& e) {
             res.status = 400;
-            json resp = {{"success", false}, {"error", std::string("Bad request: ") + e.what()}};
+            json resp = {{"success", false}, {"error", std::string("请求格式错误: ") + e.what()}};
             res.set_content(resp.dump(), "application/json");
         }
     });
@@ -369,7 +369,7 @@ int main() {
             std::string content = body.value("content", "");
             std::string template_code = body.value("template", "");
             if (title.empty() || difficulty.empty() || content.empty()) {
-                json resp = {{"success", false}, {"error", "Title, difficulty, and content are required"}};
+                json resp = {{"success", false}, {"error", "请填写所有字段"}};
                 res.status = 400;
                 res.set_content(resp.dump(), "application/json");
                 return;
@@ -380,7 +380,7 @@ int main() {
             res.set_content(resp.dump(), "application/json");
         } catch (const std::exception& e) {
             res.status = 400;
-            json resp = {{"success", false}, {"error", std::string("Bad request: ") + e.what()}};
+            json resp = {{"success", false}, {"error", std::string("请求格式错误: ") + e.what()}};
             res.set_content(resp.dump(), "application/json");
         }
     });
@@ -391,7 +391,7 @@ int main() {
         int id = std::stoi(req.matches[1]);
         Problem p = db.get_problem(id);
         if (p.id == 0) {
-            json resp = {{"success", false}, {"error", "Problem not found"}};
+            json resp = {{"success", false}, {"error", "题目不存在"}};
             res.status = 404;
             res.set_content(resp.dump(), "application/json");
             return;
@@ -429,7 +429,7 @@ int main() {
             std::string expected = body.value("expected", "");
             int position = body.value("position", 0);
             if (input.empty() || expected.empty()) {
-                json resp = {{"success", false}, {"error", "Input and expected output are required"}};
+                json resp = {{"success", false}, {"error", "请填写输入和期望输出"}};
                 res.status = 400;
                 res.set_content(resp.dump(), "application/json");
                 return;
@@ -440,7 +440,7 @@ int main() {
             res.set_content(resp.dump(), "application/json");
         } catch (const std::exception& e) {
             res.status = 400;
-            json resp = {{"success", false}, {"error", std::string("Bad request: ") + e.what()}};
+            json resp = {{"success", false}, {"error", std::string("请求格式错误: ") + e.what()}};
             res.set_content(resp.dump(), "application/json");
         }
     });
@@ -459,7 +459,7 @@ int main() {
             res.set_content(resp.dump(), "application/json");
         } catch (const std::exception& e) {
             res.status = 400;
-            json resp = {{"success", false}, {"error", std::string("Bad request: ") + e.what()}};
+            json resp = {{"success", false}, {"error", std::string("请求格式错误: ") + e.what()}};
             res.set_content(resp.dump(), "application/json");
         }
     });

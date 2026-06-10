@@ -273,14 +273,14 @@ JudgeResult compile_and_judge(const std::string& code, const std::vector<JudgeCa
     result.status = "CE";
 
     if (cases.empty()) {
-        result.compile_error = "No test cases provided";
+        result.compile_error = "未提供测试用例";
         return result;
     }
 
     std::string temp_dir = std::string(JUDGE_TEMP_DIR) + "judge-XXXXXX";
     mkdir(JUDGE_TEMP_DIR, 0777);
     if (!mkdtemp(&temp_dir[0])) {
-        result.compile_error = "Failed to create temp directory";
+        result.compile_error = "创建临时目录失败";
         return result;
     }
 
@@ -290,7 +290,7 @@ JudgeResult compile_and_judge(const std::string& code, const std::vector<JudgeCa
     {
         std::ofstream src(src_path);
         if (!src) {
-            result.compile_error = "Failed to write source file";
+            result.compile_error = "写入源文件失败";
             rm_temp_dir(temp_dir);
             return result;
         }
@@ -299,7 +299,7 @@ JudgeResult compile_and_judge(const std::string& code, const std::vector<JudgeCa
 
     std::string compile_err;
     if (do_compile(src_path, bin_path, compile_err) != 0) {
-        result.compile_error = compile_err.empty() ? "Compilation failed" : compile_err;
+        result.compile_error = compile_err.empty() ? "编译失败" : compile_err;
         rm_temp_dir(temp_dir);
         return result;
     }

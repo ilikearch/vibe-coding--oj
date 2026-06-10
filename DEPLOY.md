@@ -64,12 +64,12 @@ USE vibe_oj;
 
 INSERT INTO problems (title, difficulty, content, template) VALUES
 ('A+B Problem', 'Easy',
-'## Description\n\nGiven two integers **A** and **B**, output their sum.\n\n## Input\n\nTwo space-separated integers A and B.\n\n## Output\n\nA single integer: A + B.\n\n## Example\n\n**Input:** 2 3\n**Output:** 5',
+'## 题目描述\n\n给定两个整数 **A** 和 **B**，输出它们的和。\n\n## 输入格式\n\n两个空格分隔的整数 A 和 B。\n\n## 输出格式\n\n一个整数：A + B。\n\n## 示例\n\n**输入:** 2 3\n**输出:** 5',
 '#include <iostream>\nint main(){\n  int a,b;std::cin>>a>>b;std::cout<<a+b<<std::endl;return 0;\n}');
 
 INSERT INTO problems (title, difficulty, content, template) VALUES
 ('Reverse String', 'Medium',
-'## Description\n\nRead a string and output it reversed.\n\n## Input\n\nA single line (max 1000 chars).\n\n## Output\n\nThe reversed string.\n\n## Example\n\n**Input:** hello\n**Output:** olleh',
+'## 题目描述\n\n读入一个字符串，输出其反转后的结果。\n\n## 输入格式\n\n一行字符串（最多 1000 个字符）。\n\n## 输出格式\n\n反转后的字符串。\n\n## 示例\n\n**输入:** hello\n**输出:** olleh',
 '#include <iostream>\n#include <string>\n#include <algorithm>\nint main(){\n  std::string s;std::getline(std::cin,s);\n  std::reverse(s.begin(),s.end());\n  std::cout<<s<<std::endl;return 0;\n}');
 
 INSERT INTO test_cases (problem_id, input, expected, position) VALUES

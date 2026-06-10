@@ -65,13 +65,13 @@ function initCodeEditor() {
   var code = document.createElement('code');
   pre.appendChild(code);
 
-  wrapper.appendChild(ta);
-  wrapper.appendChild(pre);
-
   // Line numbers gutter
   var gutter = document.createElement('div');
   gutter.className = 'code-editor-gutter';
-  wrapper.insertBefore(gutter, ta);
+
+  wrapper.appendChild(gutter);
+  wrapper.appendChild(ta);
+  wrapper.appendChild(pre);
 
   function update() {
     var text = ta.value;
@@ -99,7 +99,6 @@ function initCodeEditor() {
       e.preventDefault();
       var start = ta.selectionStart;
       var end = ta.selectionEnd;
-      // If multiple lines selected, indent them
       if (start !== end) {
         var before = ta.value.substring(0, ta.selectionStart);
         var sel = ta.value.substring(ta.selectionStart, ta.selectionEnd);
@@ -117,7 +116,6 @@ function initCodeEditor() {
     }
     if (e.key === 'Enter') {
       setTimeout(function() {
-        // Auto-indent to match previous line
         var pos = ta.selectionStart;
         var before = ta.value.substring(0, pos);
         var prevLine = before.split('\n').slice(-2, -1)[0] || '';
@@ -158,7 +156,7 @@ function submitCode(problemId) {
       resultEl.innerHTML = html;
     })
     .catch(function(e) {
-      resultEl.innerHTML = '<p style="color:red">Error: ' + e.message + '</p>';
+      resultEl.innerHTML = '<p style="color:var(--color-danger)">错误: ' + e.message + '</p>';
     });
 }
 
@@ -231,13 +229,13 @@ function updateProblem(id) {
 }
 
 function deleteProblem(id) {
-  if (!confirm('Delete this problem and all its test cases?')) return;
+  if (!confirm('确定删除此题目及所有测试用例？')) return;
   postJSON('/admin/problems/' + id + '/delete', {})
     .then(function(r) {
       if (r.success) window.location.href = r.redirect;
       else alert(r.error);
     })
-    .catch(function(e) { alert('Error: ' + e.message); });
+    .catch(function(e) { alert('错误: ' + e.message); });
 }
 
 function addTestCase(problemId) {
@@ -255,13 +253,13 @@ function addTestCase(problemId) {
 }
 
 function deleteTestCase(caseId, problemId) {
-  if (!confirm('Delete this test case?')) return;
+  if (!confirm('确定删除此测试用例？')) return;
   postJSON('/admin/testcases/' + caseId + '/delete', {problem_id: problemId})
     .then(function(r) {
       if (r.success) location.reload();
       else alert(r.error);
     })
-    .catch(function(e) { alert('Error: ' + e.message); });
+    .catch(function(e) { alert('错误: ' + e.message); });
 }
 
 // Boot

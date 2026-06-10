@@ -33,7 +33,7 @@ std::string get_cookie(const std::string& cookie_header, const std::string& key)
     do { \
         if (!session || session->role != "admin") { \
             res.status = 403; \
-            res.set_content("<h1>403 Forbidden</h1>", "text/html"); \
+            res.set_content("<h1>403 无管理员权限</h1>", "text/html"); \
             return; \
         } \
     } while(0)
@@ -45,7 +45,7 @@ std::string get_cookie(const std::string& cookie_header, const std::string& key)
         session = get_session(sid); \
         if (!session) { \
             res.status = 401; \
-            res.set_content("{\"success\":false,\"error\":\"Unauthorized\"}", "application/json"); \
+            res.set_content("{\"success\":false,\"error\":\"未登录\"}", "application/json"); \
             return; \
         } \
     } while(0)
@@ -54,7 +54,7 @@ std::string get_cookie(const std::string& cookie_header, const std::string& key)
     do { \
         if (!session || session->role != "admin") { \
             res.status = 403; \
-            res.set_content("{\"success\":false,\"error\":\"Forbidden\"}", "application/json"); \
+            res.set_content("{\"success\":false,\"error\":\"无管理员权限\"}", "application/json"); \
             return; \
         } \
     } while(0)
