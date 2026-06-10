@@ -8,10 +8,9 @@ GTEST_LIBS = -lgtest -lgtest_main -lpthread
 
 DEPS = deps/cpp-httplib/httplib.h deps/json.hpp deps/bcrypt/bcrypt.h
 
-OBJS = db.o render.o md.o auth.o judge.o server.o
-LIB_OBJS = db.o render.o md.o auth.o judge.o
-TEST_OBJS = tests/test_config.o tests/test_render.o tests/test_md.o tests/test_db.o
-# Phase 2 添加: tests/test_auth.o
+OBJS = db.o render.o md.o log.o auth.o judge.o server.o
+LIB_OBJS = db.o render.o md.o log.o auth.o judge.o
+TEST_OBJS = tests/test_config.o tests/test_render.o tests/test_md.o tests/test_db.o tests/test_auth.o
 # Phase 5 添加: tests/test_judge.o
 
 TARGET = server
@@ -28,7 +27,7 @@ test: $(TEST_TARGET)
 	./$(TEST_TARGET)
 
 $(TEST_TARGET): $(LIB_OBJS) $(TEST_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(MYSQL_LIBS) $(GTEST_LIBS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(MYSQL_LIBS) $(GTEST_LIBS) -lcrypt
 
 tests/test_config.o: tests/test_config.cc config.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
@@ -60,7 +59,10 @@ render.o: render.cc render.h
 md.o: md.cc md.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-auth.o: auth.cc auth.h config.h $(DEPS)
+log.o: log.cc log.h
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+auth.o: auth.cc auth.h config.h log.h $(DEPS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 judge.o: judge.cc judge.h config.h

@@ -306,6 +306,7 @@ vibe-oj/
 ├── server.cc                  # 主入口: 路由注册 + 启动服务
 ├── render.h / render.cc       # HTML 渲染工具: 模板读取/替换, 页面骨架函数
 ├── md.h / md.cc               # 简易 Markdown→HTML 转换器
+├── log.h / log.cc               # 日志系统 (时间戳/级别/stderr 输出)
 ├── db.h / db.cc               # MySQL 连接 & CRUD 封装
 ├── auth.h / auth.cc           # Session 管理, 密码 bcrypt, 认证中间件
 ├── judge.h / judge.cc         # 判题引擎核心 (编译 + 沙箱执行)
@@ -362,17 +363,17 @@ vibe-oj/
 - [x] 运行 `make test` 全部通过
 
 ### Phase 2: 认证系统
-- [ ] 编写 `auth.h/auth.cc`:
-  - [ ] bcrypt 密码哈希 + 验证 (开源库或自实现简化版)
-  - [ ] Session Token 生成 (UUID 随机串) + 内存 `unordered_map<string, Session>`
-  - [ ] Cookie 读写 (`Set-Cookie` / `Cookie` header 解析)
-  - [ ] `auth_middleware()` → 检查 session, 未登录重定向 `/login`
-  - [ ] `admin_middleware()` → 检查 role=admin, 否则返回 403 页面
-- [ ] 实现: `GET/POST /login`
-- [ ] 实现: `GET/POST /register`
-- [ ] 实现: `GET /logout`
-- [ ] 编写 `tests/test_auth.cc` 单元测试覆盖 bcrypt/session/cookie/中间件
-- [ ] 运行 `make test` 全部通过
+- [x] 编写 `auth.h/auth.cc`:
+  - [x] bcrypt 密码哈希 + 验证 (系统 `<crypt.h>`)
+  - [x] Session Token 生成 (随机 hex) + 内存 `unordered_map<string, Session>`
+  - [x] Cookie 读写 (`Set-Cookie` / `Cookie` header 解析)
+  - [x] `CHECK_AUTH` 宏 (检查 session, 未登录重定向 `/login`)
+  - [x] `CHECK_ADMIN` 宏 (检查 role=admin, 否则返回 403 HTML)
+- [x] 实现: `GET/POST /login`
+- [x] 实现: `GET/POST /register`
+- [x] 实现: `GET /logout`
+- [x] 编写 `tests/test_auth.cc` 单元测试覆盖 bcrypt/session/cookie
+- [x] 运行 `make test` 全部通过 (62/62)
 
 ### Phase 3: 题目 CRUD (admin)
 - [ ] 实现: `GET /admin` (管理面板, 列出所有题目)

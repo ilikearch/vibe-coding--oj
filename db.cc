@@ -1,5 +1,6 @@
 #include "db.h"
 #include "config.h"
+#include "log.h"
 #include <cstring>
 #include <sstream>
 
@@ -9,8 +10,10 @@ Database::Database() {
     if (!mysql_real_connect(conn_, DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT, nullptr, 0)) {
         std::string err = mysql_error(conn_);
         mysql_close(conn_);
+        LOG_ERROR("DB connect failed: " + err);
         throw std::runtime_error("mysql_real_connect failed: " + err);
     }
+    LOG_INFO("DB connected: " + std::string(DB_HOST) + "/" + DB_NAME);
 }
 
 Database::~Database() {
@@ -26,7 +29,9 @@ std::string Database::escape(const std::string& str) {
 
 MYSQL_RES* Database::query(const std::string& sql) {
     if (mysql_query(conn_, sql.c_str()) != 0) {
-        throw std::runtime_error("query failed: " + std::string(mysql_error(conn_)) + " | SQL: " + sql);
+        std::string err = std::string(mysql_error(conn_)) + " | SQL: " + sql;
+        LOG_ERROR("DB query failed: " + err);
+        throw std::runtime_error("query failed: " + err);
     }
     return mysql_store_result(conn_);
 }
