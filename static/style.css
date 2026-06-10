@@ -468,8 +468,8 @@ button:active, .btn:active, a.btn:active {
   line-height: 1.55;
   resize: none;
   background: transparent;
-  color: transparent;
-  caret-color: #e2e8f0;
+  color: #e2e8f0;
+  caret-color: #22c55e;
   outline: none;
   tab-size: 2;
   white-space: pre;
@@ -480,44 +480,9 @@ button:active, .btn:active, a.btn:active {
 }
 
 #code-area:focus, .code-editor:focus {
-  border-color: transparent;
-  box-shadow: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.15);
 }
-
-.code-editor-highlight {
-  position: absolute;
-  top: 0;
-  left: 40px;
-  right: 0;
-  bottom: 0;
-  padding: 14px;
-  margin: 0;
-  background: transparent;
-  font-family: var(--font-mono);
-  font-size: 0.88rem;
-  line-height: 1.55;
-  white-space: pre;
-  overflow: auto;
-  pointer-events: none;
-  z-index: 1;
-  color: #e2e8f0;
-}
-
-.code-editor-highlight code {
-  background: none;
-  padding: 0;
-  color: inherit;
-  font-family: inherit;
-  font-size: inherit;
-}
-
-/* C++ Syntax Highlighting Colors */
-.hl-keyword  { color: #c792ea; font-weight: 600; }
-.hl-preproc  { color: #c792ea; }
-.hl-comment  { color: #676e95; font-style: italic; }
-.hl-string   { color: #c3e88d; }
-.hl-number   { color: #f78c6c; }
-.hl-angle    { color: #ffcb6b; }
 
 /* === Submit Result === */
 #submit-result { margin-top: 20px; }
