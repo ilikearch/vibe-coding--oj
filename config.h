@@ -16,4 +16,4 @@ constexpr int JUDGE_COMPILE_TIMEOUT_SEC = 30;
 
 constexpr int JUDGE_SANDBOX_MEMORY_KB = JUDGE_MEMORY_LIMIT_MB * 1024;
 
-constexpr const char* JUDGE_TEMP_DIR = "./.judge-tmp/";
+constexpr const char* JUDGE_TEMP_DIR = "/tmp/vibe-oj/";

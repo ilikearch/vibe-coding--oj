@@ -30,7 +30,7 @@ static int rm_cb(const char* path, const struct stat*, int, struct FTW*) {
 }
 
 static void rm_temp_dir(const std::string& dir) {
-    if (!dir.empty() && dir.rfind("/tmp/vibe-oj/", 0) == 0)
+    if (!dir.empty() && (dir.rfind("/tmp/vibe-oj/", 0) == 0 || dir.rfind("./.judge-tmp/", 0) == 0))
         nftw(dir.c_str(), rm_cb, 64, FTW_DEPTH | FTW_PHYS);
 }
 

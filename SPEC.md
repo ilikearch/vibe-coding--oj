@@ -115,7 +115,7 @@ CREATE TABLE users (
 
 ## 4. 路由设计 (服务端渲染 HTML + JSON API)
 
-**Base URL**: `http://localhost:8080`
+**Base URL**: `http://62.234.44.181:8080`
 **GET 响应格式**: `text/html` (服务端拼装完整 HTML 页面)
 **POST 请求/响应格式**: `application/json`
 **认证**: Session Cookie (`session_id=xxx`)，由服务端中间件校验
@@ -423,7 +423,7 @@ vibe-oj/
   - [x] `judge(bin_path, test_case)` → fork + rlimit + seccomp + 比对
   - [x] 资源限制: RLIMIT_CPU, RLIMIT_AS, RLIMIT_NPROC, RLIMIT_FSIZE
   - [x] seccomp: 白名单 syscall (read/write/exit/brk/mmap/futex/...)
-  - [x] chroot: 创建临时空目录 `./.judge-tmp/judge-XXXXXX/`, 拷贝 prog, `g++ -static` 编译
+  - [x] chroot: 创建临时空目录 `/tmp/vibe-oj/judge-XXXXXX/`, 拷贝 prog, `g++ -static` 编译
   - [x] stdin/stdout 通过 pipe 传递, waitpid 超时 2000ms
   - [x] 判断 exit code / signal → 映射到 AC/WA/TLE/MLE/RE
   - [x] 比对输出: trim trailing whitespace, 精确匹配
