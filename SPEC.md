@@ -4,7 +4,7 @@
 
 ## 1. 项目概述
 
-一个面向 3 人小团队的 C++ 在线判题系统（Online Judge），支持题目管理、代码提交、自动判题。
+一个面向 3 -20人小团队的 C++ 在线判题系统（Online Judge），支持题目管理、代码提交、自动判题。
 
 | 维度 | 决策 |
 |------|------|
@@ -118,17 +118,18 @@ CREATE TABLE users (
 
 | Method | Path | 说明 |
 |--------|------|------|
+| GET | `/` | **首页落地页**。展示 OJ 简介、功能特性、统计数据，提供 登录/注册/浏览题目 入口 |
 | GET | `/login` | 返回登录页 HTML (含 `<form method="POST" action="/login">`) |
-| POST | `/login` | 处理登录表单 (`username`, `password`), 成功→重定向 `/`, 失败→返回 login 页+错误提示 |
+| POST | `/login` | 处理登录表单 (`username`, `password`), 成功→重定向 `/problems`, 失败→返回 login 页+错误提示 |
 | GET | `/register` | 返回注册页 HTML |
 | POST | `/register` | 处理注册, 成功后重定向 `/login` |
-| GET | `/logout` | 清除 session, 重定向 `/login` |
+| GET | `/logout` | 清除 session, 重定向 `/` |
 
 ### 4.2 用户页面 (需登录)
 
 | Method | Path | 说明 |
 |--------|------|------|
-| GET | `/` | 题目列表页。服务端查 DB → 拼装 HTML (含题号/标题/难度表格) |
+| GET | `/problems` | 题目列表页。服务端查 DB → 拼装 HTML (含题号/标题/难度表格) |
 | GET | `/problem/:id` | 题目详情页。左侧题目描述(Markdown→HTML) + 示例用例, 右侧 `<textarea>` 编辑区 + `<form method="POST" action="/problem/:id/submit">` |
 | POST | `/problem/:id/submit` | 处理代码提交 (`code` 字段)。编译+判题, 将结果 (AC/WA/TLE/...) 拼入结果页 HTML 返回 (同一页面, 下方显示结果) |
 
@@ -245,9 +246,10 @@ submit(code) ──→ g++ code.cpp -o prog
 
 | 路径 | 页面 | 认证 | 说明 |
 |------|------|------|------|
+| `/` | 首页落地页 | 无 | OJ 简介 + 功能亮点 + 统计数据 + 登录/注册/浏览题目入口 |
 | `/login` | 登录 | 无 | `<form>` 提交 username+password |
 | `/register` | 注册 | 无 | `<form>` 提交, 默认 role=user |
-| `/` | 题目列表 | 需登录 | 表格展示 id/标题/难度, 点击进入详情 |
+| `/problems` | 题目列表 | 需登录 | 表格展示 id/标题/难度, 点击进入详情 |
 | `/problem/:id` | 题目详情 + 提交 | 需登录 | 左侧题目描述, 右侧代码 `<textarea>` + 提交按钮, 下方判题结果 |
 | `/admin` | 管理面板 | admin | 题目列表 + 新建题目入口 + 管理用户入口 |
 | `/admin/problems/new` | 新建题目 | admin | 表单: title/difficulty/content/template |
@@ -262,13 +264,13 @@ submit(code) ──→ g++ code.cpp -o prog
 - **无 AJAX**：不使用 `fetch()` / `XMLHttpRequest`
 - **代码编辑器**：`<textarea>` (无语法高亮)
 - **Markdown 渲染**：服务端 C++ 侧做简易 Markdown→HTML 转换（支持标题/代码块/段落/加粗/列表即可）
-- **导航栏**：服务端根据登录状态和 role 动态渲染（登录前显示 登录/注册，登录后显示 用户名/登出，admin 额外显示 管理后台）
+- **导航栏**：服务端根据登录状态和 role 动态渲染（登录前显示 首页/登录/注册，登录后显示 题目列表/用户名/登出，admin 额外显示 管理后台）
 
 ### 6.3 UI 布局 (题目详情页 — 服务端渲染单页)
 
 ```
 ┌──────────────────────────────────────────────┐
-│  [OJ Logo] 题目列表  |  admin (登出)          │  ← 导航栏 (服务端拼)
+│  [OJ Logo] 首页 题目列表  |  admin (登出)          │  ← 导航栏 (服务端拼)
 ├──────────────────────┬───────────────────────┤
 │  题目描述 (HTML)      │  <form method="POST"  │
 │                      │   action="/problem/   │
@@ -311,14 +313,15 @@ vibe-oj/
 ├── static/
 │   └── style.css              # 全局样式 (唯一静态文件)
 ├── templates/                 # HTML 模板文件 (含 {{PLACEHOLDER}})
+│   ├── landing.html            # 首页落地页 ({{PROBLEM_COUNT}}, {{USER_COUNT}})
 │   ├── login.html
 │   ├── register.html
-│   ├── problem_list.html      # 题目列表 ({{PROBLEM_ROWS}})
-│   ├── problem_detail.html    # 题目详情+提交 ({{DESCRIPTION}}, {{RESULT}})
-│   ├── admin_panel.html       # 管理面板 ({{PROBLEM_ROWS}})
+│   ├── problem_list.html       # 题目列表 ({{PROBLEM_ROWS}})
+│   ├── problem_detail.html     # 题目详情+提交 ({{DESCRIPTION}}, {{RESULT}})
+│   ├── admin_panel.html        # 管理面板 ({{PROBLEM_ROWS}})
 │   ├── admin_problem_form.html # 新建/编辑题目表单
-│   ├── admin_testcases.html   # 用例管理
-│   └── admin_users.html       # 用户列表
+│   ├── admin_testcases.html    # 用例管理
+│   └── admin_users.html        # 用户列表
 ├── deps/                      # 第三方库
 │   ├── cpp-httplib/           # header-only HTTP server
 │   ├── bcrypt/                # bcrypt 实现
@@ -367,7 +370,8 @@ vibe-oj/
 - [ ] 实现: `GET /admin/users` (用户列表)
 
 ### Phase 4: 用户端页面
-- [ ] 实现: `GET /` (题目列表, 从 DB 查询 → 拼装 HTML 表格)
+- [ ] 实现: `GET /` (首页落地页, 展示 OJ 简介 + 题目/用户统计 + CTA 按钮)
+- [ ] 实现: `GET /problems` (题目列表, 从 DB 查询 → 拼装 HTML 表格)
 - [ ] 实现: `GET /problem/:id` (题目详情页, 内含 `<form>` 提交区 + `<textarea name="code">`)
 - [ ] 实现: `POST /problem/:id/submit`:
   - [ ] 接收 `code` 表单字段
@@ -386,6 +390,7 @@ vibe-oj/
   - [ ] 比对输出: trim trailing whitespace, 精确匹配
 
 ### Phase 6: HTML 模板
+- [ ] `templates/landing.html` (首页落地页: OJ 名称/简介/功能亮点/统计数据/CTA 按钮, 含 `{{PROBLEM_COUNT}}`, `{{USER_COUNT}}`)
 - [ ] `templates/login.html` (含 `{{ERROR}}` 占位符)
 - [ ] `templates/register.html`
 - [ ] `templates/problem_list.html` (含 `{{PROBLEM_ROWS}}` 占位符)
@@ -417,15 +422,16 @@ vibe-oj/
 ## 9. 验收标准
 
 ### 功能验收
-1. 用户可注册、登录、登出; session 过期后需重新登录
-2. 普通用户可浏览题目列表、查看题目详情 + 代码模板
-3. 普通用户可提交 C++ 代码, 获得 AC/WA/TLE/MLE/RE/CE 判定
-4. WA 时展示第几个测试点失败 + 期望 vs 实际输出
-5. CE 时展示 g++ 原始错误信息
-6. 管理员可创建/编辑/删除题目, 管理测试用例
-7. 管理员可查看用户列表 (只读)
-8. 提交记录在当前 session 内可查看 (内存存储)
-9. 题目按难度 (Easy/Medium/Hard) 分级展示
+1. 未登录用户可访问首页落地页, 查看 OJ 简介和基本统计
+2. 用户可注册、登录、登出; session 过期后需重新登录
+3. 普通用户可浏览题目列表、查看题目详情 + 代码模板
+4. 普通用户可提交 C++ 代码, 获得 AC/WA/TLE/MLE/RE/CE 判定
+5. WA 时展示第几个测试点失败 + 期望 vs 实际输出
+6. CE 时展示 g++ 原始错误信息
+7. 管理员可创建/编辑/删除题目, 管理测试用例
+8. 管理员可查看用户列表 (只读)
+9. 提交记录在当前 session 内可查看 (内存存储)
+10. 题目按难度 (Easy/Medium/Hard) 分级展示
 
 ### 性能 & 安全验收
 1. 单题判题耗时 < 2s (含编译 + 10 个测试用例)
@@ -438,11 +444,12 @@ vibe-oj/
 8. 用户 A 无法访问用户 B 的 session
 
 ### 前端验收
-1. 所有页面通过 `<form>` 提交 + 服务端重定向/渲染, 无需 JavaScript
-2. 未登录时访问受保护页面自动重定向到 `/login`
-3. admin 页面仅 admin 角色可访问 (后端中间件校验, 非 admin 返回 403 HTML)
-4. UI 在 1280×720 以上分辨率正常显示
-5. 导航栏根据登录状态/角色动态变化 (服务端渲染)
+1. 首页 `/` 对所有用户可见 (无需登录), 展示 OJ 名称/简介/统计/入口
+2. 所有页面通过 `<form>` 提交 + 服务端重定向/渲染, 无需 JavaScript
+3. 未登录时访问受保护页面自动重定向到 `/login`
+4. admin 页面仅 admin 角色可访问 (后端中间件校验, 非 admin 返回 403 HTML)
+5. UI 在 1280×720 以上分辨率正常显示
+6. 导航栏根据登录状态/角色动态变化 (服务端渲染)
 
 ---
 
