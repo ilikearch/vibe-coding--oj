@@ -336,11 +336,12 @@ vibe-oj/
 │   ├── style.css              # 全局样式 (唯一 CSS 文件)
 │   └── app.js                 # 前端交互逻辑 (fetch API, DOM 操作)
 ├── templates/                 # HTML 模板文件 (含 {{PLACEHOLDER}})
+│   ├── _base.html              # 基础布局骨架 ({{TITLE}}, {{NAV}}, {{BODY}})
 │   ├── landing.html            # 首页落地页 ({{PROBLEM_COUNT}}, {{USER_COUNT}})
 │   ├── login.html
 │   ├── register.html
 │   ├── problem_list.html       # 题目列表 ({{PROBLEM_ROWS}})
-│   ├── problem_detail.html     # 题目详情+提交 ({{DESCRIPTION}}, {{RESULT}})
+│   ├── problem_detail.html     # 题目详情+提交 ({{TITLE}}, {{DESCRIPTION}}, {{RESULT}})
 │   ├── admin_panel.html        # 管理面板 ({{PROBLEM_ROWS}})
 │   ├── admin_problem_form.html # 新建/编辑题目表单
 │   ├── admin_testcases.html    # 用例管理
@@ -348,13 +349,14 @@ vibe-oj/
 ├── deps/                      # 第三方库 (header-only)
 │   └── cpp-httplib/           # header-only HTTP server
 ├── Makefile                   # 构建 (all / test / clean / run)
-├── tests/                     # 单元测试 (Google Test, 每 Phase 分步运行)
+├── tests/                     # 单元测试 + API 集成测试
 │   ├── test_config.cc
 │   ├── test_db.cc
 │   ├── test_render.cc
 │   ├── test_md.cc
 │   ├── test_auth.cc            # Phase 2 加入
-│   └── test_judge.cc           # Phase 5 加入
+│   ├── test_judge.cc           # Phase 5 加入
+│   └── test_api.py             # API 集成测试 (32 项, Python)
 └── SPEC.md
 ```
 
@@ -431,20 +433,21 @@ vibe-oj/
 - [x] 运行 `make test` 全部通过 (83/83)
 
 ### Phase 6: HTML 模板
-- [ ] `templates/landing.html` (首页落地页: OJ 名称/简介/功能亮点/统计数据/CTA 按钮, 含 `{{PROBLEM_COUNT}}`, `{{USER_COUNT}}`)
-- [ ] `templates/login.html` (含 `{{ERROR}}` 占位符)
-- [ ] `templates/register.html`
-- [ ] `templates/problem_list.html` (含 `{{PROBLEM_ROWS}}` 占位符)
-- [ ] `templates/problem_detail.html`:
-  - [ ] `{{TITLE}}`, `{{DESCRIPTION}}` (Markdown→HTML), `{{TEMPLATE}}` (代码模板预填)
-  - [ ] `<form method="POST" action="/problem/{{ID}}/submit">`
-  - [ ] `{{RESULT}}` 判题结果区 (AC 绿色 / WA 红色 / CE 黄色 / ...)
-- [ ] `templates/admin_panel.html` (题目列表 + 操作链接)
-- [ ] `templates/admin_problem_form.html` (新建/编辑复用同一模板)
-- [ ] `templates/admin_testcases.html` (用例列表 + 添加表单)
-- [ ] `templates/admin_users.html` (用户表格)
-- [ ] `static/style.css` (全局样式)
-- [ ] 运行 `make test` 全部通过
+- [x] `templates/_base.html` (基础布局: DOCTYPE + nav + main + footer, 含 `{{TITLE}}`, `{{NAV}}`, `{{BODY}}`)
+- [x] `templates/landing.html` (首页落地页: 含 `{{PROBLEM_COUNT}}`, `{{USER_COUNT}}`, hero/features/stats)
+- [x] `templates/login.html` (登录表单, JS fetch 提交 JSON)
+- [x] `templates/register.html` (注册表单, JS fetch 提交 JSON)
+- [x] `templates/problem_list.html` (含 `{{PROBLEM_ROWS}}` 占位符)
+- [x] `templates/problem_detail.html`:
+  - [x] `{{TITLE}}`, `{{DESCRIPTION}}` (Markdown→HTML), `{{TEMPLATE}}`, `{{ID}}`, `{{DIFFICULTY}}`, `{{SAMPLE_CASES}}`
+  - [x] `<textarea>` 代码编辑区 + Submit 按钮 + `{{RESULT}}`
+- [x] `templates/admin_panel.html` (含 `{{PROBLEM_ROWS}}`, 含操作按钮)
+- [x] `templates/admin_problem_form.html` (新建/编辑复用: `{{TITLE}}`, `{{DIFFICULTY_OPTIONS}}`, `{{CONTENT}}`, `{{TEMPLATE}}`)
+- [x] `templates/admin_testcases.html` (用例列表 + 添加表单, 含 `{{PROBLEM_ID}}`, `{{TESTCASE_ROWS}}`)
+- [x] `templates/admin_users.html` (含 `{{USER_ROWS}}`)
+- [x] `static/style.css` (全局样式: 导航栏、表格、表单、按钮、代码编辑器、难度徽标、响应式)
+- [x] 运行 `make test` 全部通过 (83/83)
+- [x] API 集成测试全部通过 (32/32)
 
 ### Phase 7: 主服务器整合
 - [ ] `server.cc`: 注册所有路由 handler, 挂载 `static/` 目录, 启动 8080 端口

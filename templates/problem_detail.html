@@ -1,0 +1,14 @@
+<div class="problem-layout">
+  <div class="problem-description">
+    <h1>{{TITLE}}</h1>
+    <span class="difficulty difficulty-{{DIFFICULTY}}">{{DIFFICULTY}}</span>
+    <div class="markdown-body">{{DESCRIPTION}}</div>
+    {{SAMPLE_CASES}}
+  </div>
+  <div class="problem-submit">
+    <h2>Submit Solution</h2>
+    <textarea id="code-area" class="code-editor" rows="20">{{TEMPLATE}}</textarea>
+    <button onclick="submitCode({{ID}})" class="btn btn-primary" style="margin-top:12px">Submit</button>
+    <div id="submit-result">{{RESULT}}</div>
+  </div>
+</div>
