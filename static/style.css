@@ -68,6 +68,18 @@ nav a:first-child, .navbar a:first-child {
   margin-right: auto;
 }
 
+.admin-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #fff;
+  background: var(--color-danger);
+}
+
 /* === Layout === */
 main, .container {
   flex: 1;

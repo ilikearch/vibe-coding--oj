@@ -17,7 +17,9 @@ static std::string nav_public() {
     return "<a href=\"/\">Home</a> | <a href=\"/login\">Login</a> | <a href=\"/register\">Register</a>";
 }
 static std::string nav_user(const std::string& username, bool is_admin) {
-    std::string s = "<a href=\"/problems\">Problems</a> | " + username + " | <a href=\"/logout\">Logout</a>";
+    std::string s = "<a href=\"/problems\">Problems</a> | ";
+    if (is_admin) s += "<span class=\"admin-badge\">admin</span> ";
+    s += username + " | <a href=\"/logout\">Logout</a>";
     if (is_admin) s += " | <a href=\"/admin\">Admin</a>";
     return s;
 }
