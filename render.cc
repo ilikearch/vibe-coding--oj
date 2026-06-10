@@ -36,10 +36,10 @@ std::string render_page(const std::string& title, const std::string& body,
         std::ostringstream ss;
         ss << "<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n"
            << "<title>" << title << " - Vibe OJ</title>\n"
-           << "<link rel=\"stylesheet\" href=\"/style.css?v=5\">\n</head>\n<body>\n"
+           << "<link rel=\"stylesheet\" href=\"/style.css?v=6\">\n</head>\n<body>\n"
            << "<nav>" << nav_html << "</nav>\n"
            << "<main>\n" << body << "\n</main>\n"
-           << "<script src=\"/app.js?v=5\"></script>\n"
+           << "<script src=\"/app.js?v=6\"></script>\n"
            << "</body>\n</html>";
         return ss.str();
     }
