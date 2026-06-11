@@ -1,3 +1,5 @@
 .judge-tmp/
 .opencode
 .vscode
+*.o
+server
