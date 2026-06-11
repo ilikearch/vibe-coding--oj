@@ -54,6 +54,25 @@ Problem Database::get_problem(int id) {
     return p;
 }
 
+Problem Database::get_problem_by_title(const std::string& title) {
+    std::ostringstream ss;
+    ss << "SELECT id, title, difficulty, content, template, created_at FROM problems WHERE title='"
+       << escape(title) << "' LIMIT 1";
+    MYSQL_RES* res = query(ss.str());
+    if (!res) return {};
+    MYSQL_ROW row = mysql_fetch_row(res);
+    if (!row) { mysql_free_result(res); return {}; }
+    Problem p;
+    p.id = row[0] ? std::stoi(row[0]) : 0;
+    p.title = row[1] ? row[1] : "";
+    p.difficulty = row[2] ? row[2] : "";
+    p.content = row[3] ? row[3] : "";
+    p.template_code = row[4] ? row[4] : "";
+    p.created_at = row[5] ? row[5] : "";
+    mysql_free_result(res);
+    return p;
+}
+
 std::vector<Problem> Database::get_all_problems() {
     MYSQL_RES* res = query("SELECT id, title, difficulty, content, template, created_at FROM problems ORDER BY id");
     std::vector<Problem> problems;
@@ -196,6 +215,12 @@ int Database::insert_user(const std::string& username, const std::string& passwo
        << escape(role) << "')";
     query(ss.str());
     return mysql_insert_id(conn_);
+}
+
+void Database::update_user_role(int id, const std::string& role) {
+    std::ostringstream ss;
+    ss << "UPDATE users SET role='" << escape(role) << "' WHERE id=" << id;
+    query(ss.str());
 }
 
 int Database::count_problems() {

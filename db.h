@@ -39,6 +39,7 @@ public:
     MYSQL* conn() { return conn_; }
 
     Problem get_problem(int id);
+    Problem get_problem_by_title(const std::string& title);
     std::vector<Problem> get_all_problems();
     int insert_problem(const std::string& title, const std::string& difficulty,
                        const std::string& content, const std::string& template_code);
@@ -56,6 +57,7 @@ public:
     std::vector<User> get_all_users();
     int insert_user(const std::string& username, const std::string& password,
                     const std::string& role = "user");
+    void update_user_role(int id, const std::string& role);
     int count_problems();
     int count_users();
 

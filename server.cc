@@ -111,6 +111,40 @@ static std::string build_difficulty_options(const std::string& selected) {
 int main() {
     LOG_INFO("Vibe OJ Server starting on port 8080...");
     std::cout << "Vibe OJ Server starting on port 8080..." << std::endl;
+
+    LOG_INFO("Seeding database...");
+    User admin_user = db.get_user_by_username("admin");
+    if (admin_user.id == 0) {
+        std::string hash = bcrypt_hash("admin123");
+        int uid = db.insert_user("admin", hash, "admin");
+        LOG_INFO("Created admin user id=" + std::to_string(uid));
+    } else if (admin_user.role != "admin") {
+        db.update_user_role(admin_user.id, "admin");
+        LOG_INFO("Promoted user 'admin' to admin role");
+    }
+    std::string sum_title = "Sum A+B";
+    Problem sum_problem = db.get_problem_by_title(sum_title);
+    if (sum_problem.id == 0) {
+        int pid = db.insert_problem(sum_title, "Easy",
+            "## 题目描述\n\n给定两个整数 A 和 B，输出它们的和。\n\n## 输入格式\n\n两个空格分隔的整数。\n\n## 输出格式\n\n一个整数。\n\n## 示例\n\n输入: `2 3`\n输出: `5`",
+            "#include <iostream>\nint main() {\n  int a, b;\n  std::cin >> a >> b;\n  std::cout << a + b << std::endl;\n  return 0;\n}");
+        db.insert_test_case(pid, "2 3", "5", 0);
+        db.insert_test_case(pid, "10 20", "30", 1);
+        db.insert_test_case(pid, "-5 5", "0", 2);
+        LOG_INFO("Created problem 'Sum A+B' id=" + std::to_string(pid));
+    }
+    if (db.get_problem_by_title("ToDelete").id == 0) {
+        int pid = db.insert_problem("ToDelete", "Hard",
+            "## 待删除\n\n此题目用于测试删除功能。", "");
+        LOG_INFO("Created problem 'ToDelete' id=" + std::to_string(pid));
+    }
+    if (db.get_problem_by_title("ToEdit").id == 0) {
+        int pid = db.insert_problem("ToEdit", "Easy",
+            "## 待编辑\n\n此题目用于测试编辑功能。", "// original template");
+        db.insert_test_case(pid, "test_input", "test_expected", 0);
+        LOG_INFO("Created problem 'ToEdit' id=" + std::to_string(pid));
+    }
+
     httplib::Server svr;
 
     svr.set_mount_point("/", "./static");
