@@ -228,6 +228,7 @@ int main() {
             {"DIFFICULTY", p.difficulty},
             {"DESCRIPTION", md_to_html(p.content)},
             {"TEMPLATE", p.template_code},
+            {"TEMPLATE_LABEL", p.template_code.empty() ? "" : "已加载模板"},
             {"ID", std::to_string(id)},
             {"SAMPLE_CASES", build_sample_cases(cases)},
             {"RESULT", ""},

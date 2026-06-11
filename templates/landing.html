@@ -2,48 +2,186 @@
   <h1>Vibe OJ</h1>
   <p class="hero-tagline">面向小团队的轻量级 C++ 在线判题系统。<br>安全沙箱执行，实时判题反馈。</p>
   <div class="hero-cta">
-    <a href="/problems" class="btn btn-primary">浏览题目</a>
+    <a href="/problems" class="btn btn-primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      浏览题目
+    </a>
     <a href="/register" class="btn btn-secondary">注册</a>
     <a href="/login" class="btn btn-secondary">登录</a>
   </div>
 </section>
 
-<section class="features">
-  <h2>特色功能</h2>
-  <div class="feature-grid">
-    <div class="feature-card">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary);margin-bottom:12px"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-      <h3>C++ 判题</h3>
-      <p>提交 g++ 代码，基于 stdin/stdout 比对自动判定。</p>
+<hr class="section-divider">
+
+<section class="stats">
+  <div class="stats-grid">
+    <div class="stat-card">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary);margin-bottom:8px"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      <span class="stat-value">{{PROBLEM_COUNT}}</span>
+      <span class="stat-label">编程题目</span>
     </div>
-    <div class="feature-card">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary);margin-bottom:12px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-      <h3>沙箱执行</h3>
-      <p>rlimit + seccomp + chroot 三层安全隔离。</p>
-    </div>
-    <div class="feature-card">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary);margin-bottom:12px"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      <h3>简易认证</h3>
-      <p>注册、登录，bcrypt 密码哈希保护。</p>
-    </div>
-    <div class="feature-card">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary);margin-bottom:12px"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-      <h3>管理后台</h3>
-      <p>在线管理题目和测试用例。</p>
+    <div class="stat-card">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-info);margin-bottom:8px"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span class="stat-value">{{USER_COUNT}}</span>
+      <span class="stat-label">注册用户</span>
     </div>
   </div>
 </section>
 
-<section class="stats">
-  <h2>平台统计</h2>
-  <div class="stats-grid">
-    <div class="stat-card">
-      <span class="stat-value">{{PROBLEM_COUNT}}</span>
-      <span class="stat-label">题目数</span>
+<hr class="section-divider">
+
+<section class="how-it-works">
+  <h2>使用流程</h2>
+  <p class="section-subtitle">只需四步，即可完成 C++ 代码的在线提交与自动判题</p>
+  <div class="workflow-grid">
+    <div class="workflow-card">
+      <div class="workflow-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary)"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+      </div>
+      <div class="workflow-step-num">1</div>
+      <h3>注册账号</h3>
+      <p>一键创建账号，即刻开始编程之旅。支持安全密码哈希保护。</p>
     </div>
-    <div class="stat-card">
-      <span class="stat-value">{{USER_COUNT}}</span>
-      <span class="stat-label">用户数</span>
+    <div class="workflow-card">
+      <div class="workflow-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary)"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </div>
+      <div class="workflow-step-num">2</div>
+      <h3>编写代码</h3>
+      <p>在在线编辑器中编写 C++ 代码，支持自动缩进、代码模板与键盘快捷键。</p>
     </div>
+    <div class="workflow-card">
+      <div class="workflow-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary)"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      </div>
+      <div class="workflow-step-num">3</div>
+      <h3>提交判题</h3>
+      <p>一键提交，沙箱编译执行，比对输入输出。支持时间与内存限制。</p>
+    </div>
+    <div class="workflow-card">
+      <div class="workflow-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary)"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <div class="workflow-step-num">4</div>
+      <h3>查看结果</h3>
+      <p>实时反馈 AC/WA/CE/TLE/RE 状态，对比期望输出与实际输出差异。</p>
+    </div>
+  </div>
+</section>
+
+<section class="features">
+  <h2>核心能力</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary);margin-bottom:14px"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      <h3>C++ 判题</h3>
+      <p>提交 g++ 代码，基于 stdin/stdout 比对自动判定。支持多种判题状态反馈。</p>
+    </div>
+    <div class="feature-card">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary);margin-bottom:14px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      <h3>三层沙箱</h3>
+      <p>rlimit 资源限制 + seccomp 系统调用过滤 + chroot 目录隔离，杜绝恶意代码。</p>
+    </div>
+    <div class="feature-card">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary);margin-bottom:14px"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <h3>用户系统</h3>
+      <p>注册登录、Session 管理、bcrypt 密码哈希，安全可靠。</p>
+    </div>
+    <div class="feature-card">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary);margin-bottom:14px"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+      <h3>管理后台</h3>
+      <p>在线管理题目、编辑 Markdown 描述、配置测试用例，一切尽在掌握。</p>
+    </div>
+    <div class="feature-card">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary);margin-bottom:14px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <h3>时间限制</h3>
+      <p>可配置的 CPU 时间限制，自动检测 TLE 超时。默认 2 秒时限。</p>
+    </div>
+    <div class="feature-card">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary);margin-bottom:14px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <h3>Markdown 题目</h3>
+      <p>题目描述支持 Markdown 格式，代码块、列表、表格随心编排。</p>
+    </div>
+  </div>
+</section>
+
+<section class="tech-section">
+  <h2>技术栈</h2>
+  <div class="tech-grid">
+    <div class="tech-card">
+      <div class="tech-card-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary)"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      </div>
+      <div class="tech-card-body">
+        <h3>判题引擎</h3>
+        <p>g++ 编译，fork/exec 子进程执行，rlimit + seccomp + chroot 三层安全沙箱</p>
+        <div class="tech-tags">
+          <span class="tech-tag">g++</span>
+          <span class="tech-tag">seccomp</span>
+          <span class="tech-tag">rlimit</span>
+          <span class="tech-tag">chroot</span>
+        </div>
+      </div>
+    </div>
+    <div class="tech-card">
+      <div class="tech-card-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-info)"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+      </div>
+      <div class="tech-card-body">
+        <h3>后端服务</h3>
+        <p>C++17 + cpp-httplib 高性能 HTTP 服务器，MySQL 数据持久化，JSON API</p>
+        <div class="tech-tags">
+          <span class="tech-tag">C++17</span>
+          <span class="tech-tag">httplib</span>
+          <span class="tech-tag">MySQL</span>
+          <span class="tech-tag">JSON</span>
+        </div>
+      </div>
+    </div>
+    <div class="tech-card">
+      <div class="tech-card-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-warning)"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </div>
+      <div class="tech-card-body">
+        <h3>前端界面</h3>
+        <p>原生 HTML/CSS/JS 无框架依赖，JetBrains Mono + IBM Plex Sans 专业字体</p>
+        <div class="tech-tags">
+          <span class="tech-tag">HTML5</span>
+          <span class="tech-tag">CSS3</span>
+          <span class="tech-tag">Vanilla JS</span>
+          <span class="tech-tag">SVG</span>
+        </div>
+      </div>
+    </div>
+    <div class="tech-card">
+      <div class="tech-card-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-danger)"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div class="tech-card-body">
+        <h3>安全机制</h3>
+        <p>bcrypt 密码哈希、Session Token 认证、seccomp 系统调用白名单、资源限制</p>
+        <div class="tech-tags">
+          <span class="tech-tag">bcrypt</span>
+          <span class="tech-tag">Session</span>
+          <span class="tech-tag">Sandbox</span>
+          <span class="tech-tag">ACL</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-section">
+  <h2>准备开始编程了吗？</h2>
+  <p class="cta-subtitle">加入 Vibe OJ，在线提交 C++ 代码，即时获取判题结果。</p>
+  <div class="cta-buttons">
+    <a href="/register" class="btn btn-primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+      立即注册
+    </a>
+    <a href="/problems" class="btn btn-secondary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      查看题目
+    </a>
   </div>
 </section>

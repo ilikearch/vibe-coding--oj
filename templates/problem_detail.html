@@ -6,9 +6,52 @@
     {{SAMPLE_CASES}}
   </div>
   <div class="problem-submit">
-    <h2>提交代码</h2>
-    <textarea id="code-area" class="code-editor" rows="20">{{TEMPLATE}}</textarea>
-    <button onclick="submitCode({{ID}})" class="btn btn-primary" style="margin-top:12px">提交</button>
+    <div class="editor-panel">
+      <div class="editor-tab-bar">
+        <div class="editor-tab active">
+          <svg class="editor-tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          <span class="editor-tab-name">main.cpp</span>
+        </div>
+        <div class="editor-template-label" title="代码模板已预填充">{{TEMPLATE_LABEL}}</div>
+      </div>
+      <div class="editor-toolbar">
+        <div class="editor-toolbar-left">
+          <button class="editor-tool-btn" onclick="formatCode()" title="格式化代码 (Ctrl+L)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/></svg>
+            <span>格式化</span>
+          </button>
+          <button class="editor-tool-btn" onclick="resetTemplate()" title="重置为代码模板">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+            <span>重置</span>
+          </button>
+          <button class="editor-tool-btn" onclick="copyCode()" title="复制代码 (Ctrl+C)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            <span>复制</span>
+          </button>
+        </div>
+        <button class="btn btn-primary editor-submit-btn" onclick="submitCode({{ID}})" title="提交判题 (Ctrl+Enter)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          提交判题
+        </button>
+      </div>
+      <div class="editor-body">
+        <textarea id="code-area" class="code-editor" rows="20" spellcheck="false">{{TEMPLATE}}</textarea>
+      </div>
+      <div class="editor-status-bar">
+        <div class="editor-status-left">
+          <span id="editor-cursor-pos">Ln 1, Col 1</span>
+          <span class="status-sep">|</span>
+          <span id="editor-line-count">0 lines</span>
+        </div>
+        <div class="editor-status-right">
+          <span>C++</span>
+          <span class="status-sep">|</span>
+          <span>UTF-8</span>
+          <span class="status-sep">|</span>
+          <span>Spaces: 2</span>
+        </div>
+      </div>
+    </div>
     <div id="submit-result">{{RESULT}}</div>
   </div>
 </div>
